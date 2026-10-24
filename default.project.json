@@ -1,0 +1,28 @@
+{
+  "name": "Aetherfall — Equipment and Combat Training",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": { "$path": "src/shared" }
+    },
+    "ServerScriptService": {
+      "Workshop": { "$path": "src/server" }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "EquipmentWorkshop": { "$path": "src/client" }
+      }
+    },
+    "Workspace": {
+      "$properties": { "Gravity": 196.2, "StreamingEnabled": true }
+    },
+    "Lighting": {
+      "$properties": {
+        "Ambient": [0.4, 0.42, 0.5],
+        "OutdoorAmbient": [0.55, 0.55, 0.6],
+        "Brightness": 2,
+        "ClockTime": 15
+      }
+    }
+  }
+}
