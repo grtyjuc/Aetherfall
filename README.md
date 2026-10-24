@@ -1,8 +1,8 @@
 # Aetherfall: Shards of the Hollow Star
 
-A Roblox fantasy RPG built in small installments from the [master brief](docs/MASTER_BRIEF.md).
+A fantasy action RPG for Roblox, set in the world of Hearthglen and the shattered Hollow Star.
 
-**Installment 2: equipment and combat training.** This is a Studio-only development sandbox. All 36 items are provided in a level-10, session-only inventory. Leaving the session resets everything. The server intentionally refuses to start this sandbox outside Studio.
+**Current build: equipment and combat training.** This is a Studio-only development sandbox. All 36 items are provided in a level-10, session-only inventory. Leaving the session resets everything. The server intentionally refuses to start this sandbox outside Studio.
 
 ## Included now
 
@@ -23,17 +23,18 @@ Equipped stats now affect damage, maximum health and walking speed. Equipment ch
 
 ## Build and open in Studio
 
-Use **Rojo 7.7.1**, **Lune 0.11.1**, and Python 3. In the Linux x86_64 cloud environment:
+Use **Rojo 7.7.1**, **Lune 0.11.1**, and Python 3. On Linux x86_64:
 
 ```sh
-cd /workspace/Roblox-game-V1
+git clone https://github.com/grtyjuc/Roblox-game-V1.git
+cd Roblox-game-V1
 python3 scripts/setup_tools.py
 python3 scripts/check.py
 ```
 
 The installer downloads pinned official GitHub releases into ignored `.tools/` and verifies SHA256 checksums. It makes no global changes. Checks compile Luau, test rules/models/world, build the place, and verify the artifact. Both commands are repeatable.
 
-On Windows/macOS, install matching official releases from [Rojo](https://github.com/rojo-rbx/rojo/releases/tag/v7.7.1) and [Lune](https://github.com/lune-org/lune/releases/tag/v0.11.1) on `PATH` (or in `.tools/`), then run `python scripts/check.py` from the repository root. The cloud installer only supports Linux x86_64.
+On Windows/macOS, install matching official releases from [Rojo](https://github.com/rojo-rbx/rojo/releases/tag/v7.7.1) and [Lune](https://github.com/lune-org/lune/releases/tag/v0.11.1) on `PATH` (or in `.tools/`), then run `python scripts/check.py` from the repository root. The setup script supports Linux x86_64.
 
 Open **`build/Aetherfall-Step-2.rbxl`** with Roblox Studio, then press **Play**. The world generates when the server starts. No Command Bar pasting, plugins, DataStore access, keys, or uploaded assets are required. Build without running tests:
 
@@ -53,7 +54,7 @@ For live syncing, use the matching official Rojo Studio plugin and `.tools/rojo 
 6. Close the panel and walk around. Reopen with **I**, controller **Y**, touch **Gear**, or the anvil prompt. Scroll details to reach every slot on small screens.
 7. Follow the side paths around the noticeboard to the straw dummies. Look toward a dummy to select it, or cycle with **T / R3**. Move close and face it for melee attacks.
 8. Attack with **left click / R2 / touch Attack**; use your class skill with **1 / X / touch Skill**. Watch resources, cooldowns and dummy health. The two left dummies demonstrate Flame Burst's radius.
-9. Try Ranger's bow versus knife, wand/focus versus staff, shield versus greatsword, and the HUD's reduced-motion setting. Dummies cannot retaliate in this installment.
+9. Try Ranger's bow versus knife, wand/focus versus staff, shield versus greatsword, and the HUD's reduced-motion setting. Dummies do not retaliate yet.
 
 ## Architecture
 
@@ -82,4 +83,4 @@ Combat requests send only an action and registered target ID; the server derives
 
 `python3 scripts/check.py` checks all 12 runtime sources, 24 equipment tests, 31 combat-rule tests, 16 mocked service-handler tests, all 36 procedural models, R6/R15 attachments, workshop/training construction and the generated place. These use Lune's data model and mocked service/physics queries, not the live Roblox engine. See [test coverage and pending Studio checks](docs/TESTING.md).
 
-**Studio play, multiplayer remotes, UI rendering, touch/controller navigation, streaming and collisions still need [manual checks](docs/TESTING.md).** The cloud cannot run Roblox Studio. No successful Studio playtest, visual polish, save reliability, or published experience is claimed.
+Automated checks pass. **Studio playtests are still pending**, including multiplayer, UI rendering, touch/controller navigation, streaming and collisions. See the [manual checklist](docs/TESTING.md).

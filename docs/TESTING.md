@@ -1,4 +1,4 @@
-# Installments 1–2 checks
+# Testing
 
 ## Automated checks actually run
 
@@ -14,7 +14,7 @@ Run `python3 scripts/check.py` from the repository root. Tool pins are in `scrip
 - Attachment construction verifies R6/R15, every weapon, quivers, unanchored massless welded parts, repeated replacement, cleanup and scaled R6 hand offsets. These checks do not simulate character physics.
 - Training-ground construction verifies three unique server-readable targets, finite/queryable hitboxes, health labels, repeatability and nearby targets suitable for Flame Burst. World geometry totals 269 static parts (187 workshop + 82 training), excluding character attachments and transient effects.
 
-## Manual Studio acceptance — NOT RUN in cloud
+## Pending Studio playtests
 
 Open the built place and use **Play**, then **Server & Clients** with two clients. These remain pending until performed in Studio.
 
@@ -52,4 +52,4 @@ Open the built place and use **Play**, then **Server & Clients** with two client
 | Reduced motion | Stops grip swings and moving/burst effects; damage text and all gameplay remain available |
 | Character rigs | R6/R15 and scaled avatars hold gear at the hand/forearm/back without anchoring, flinging or collisions |
 
-All live Studio tests above remain **unrun** in the cloud, even when the corresponding pure or mocked tests pass. Full body animations, enemy retaliation/AI, dodging invulnerability, audio, DataStore, quests and progression are not implemented yet.
+The Studio playtests above have **not been run**. Pure and mocked tests do not replace live playtesting. Full body animations, enemy retaliation/AI, dodging invulnerability, audio, DataStore, quests and progression are not implemented yet.
