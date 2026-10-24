@@ -21,6 +21,10 @@ A fantasy action RPG for Roblox, set in the world of Hearthglen and the shattere
 
 Equipped stats now affect damage, maximum health and walking speed. Equipment changes never heal or revive; class/equipment changes preserve resources and cooldowns. Shield Bash requires a shield, so two-handed Sentinel builds must switch back to use it. Quickstep moves at most 10 studs along a server-checked clear grounded path. Ranged damage resolves immediately after validation; projectile travel is cosmetic. Weapon-grip motion is procedural, not a full body animation set. Sell values are data only. Selling, crafting, upgrades, enemy AI, loot, quests and saving remain in the [roadmap](docs/ROADMAP.md).
 
+## Open the ready-made Studio file
+
+Download [Aetherfall.rbxl](studio/Aetherfall.rbxl) using GitHub's **Download raw file** button. In Roblox Studio, choose **File → Open from File**, select it, then press **Play**. The workshop and training grounds generate at startup. No plugins are required, and progress is session-only.
+
 ## Build and open in Studio
 
 Use **Rojo 7.7.1**, **Lune 0.11.1**, and Python 3. On Linux x86_64:
