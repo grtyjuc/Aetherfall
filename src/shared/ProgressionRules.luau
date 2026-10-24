@@ -161,6 +161,21 @@ function Rules.grantReward(profile, rewardId, rewardSpec)
 	}
 end
 
+-- Repeatable enemy rewards use a separate trusted path. Kill identity is deduplicated
+-- by EnemyRewards; per-kill claims are deliberately not stored in reward history.
+function Rules.grantCombatReward(profile, xp, gold)
+	local valid, message = Rules.validate(profile)
+	if not valid then return false, message end
+	if not integer(xp, 1, 1000) or not integer(gold, 0, 100) then
+		return false, "Invalid server combat reward."
+	end
+	if profile.gold + gold > MAX_GOLD then return false, "Gold balance would exceed its limit." end
+	-- No rejection or yielding occurs after this point.
+	profile.gold += gold
+	local levels = applyXp(profile, xp)
+	return true, "Enemy reward earned.", { xp = xp, gold = gold, levelsGained = levels, level = profile.level }
+end
+
 function Rules.selectClass(profile, className)
 	local valid, message = Rules.validate(profile)
 	if not valid then return false, message end

@@ -109,7 +109,9 @@ local swingStates = {}
 local function inventoryOpen()
 	local inventory = playerGui:FindFirstChild("AetherfallEquipment")
 	local workshop = inventory and inventory:FindFirstChild("Workshop")
-	return workshop ~= nil and workshop.Visible
+	local quests = playerGui:FindFirstChild("AetherfallQuests")
+	local dialogue = quests and quests:FindFirstChild("Dialogue")
+	return (workshop ~= nil and workshop.Visible) or (dialogue ~= nil and dialogue.Visible)
 end
 local function notify(message, duration)
 	status.Text = message
@@ -141,9 +143,15 @@ local function targetList()
 	local world = workspace:FindFirstChild("AetherfallTrainingGrounds")
 	local targets = world and world:FindFirstChild("Targets")
 	local result = {}
-	if not root or not targets then return result end
+	if not root then return result end
+	local candidates = if targets then targets:GetChildren() else {}
+	local enemies = workspace:FindFirstChild("AetherfallEnemies")
+	local enemyTargets = enemies and enemies:FindFirstChild("Targets")
+	if enemyTargets then
+		for _, enemy in enemyTargets:GetChildren() do table.insert(candidates, enemy) end
+	end
 	local camera = workspace.CurrentCamera
-	for _, model in targets:GetChildren() do
+	for _, model in candidates do
 		local hitbox = model:FindFirstChild("Hitbox")
 		local id = model:GetAttribute("TargetId")
 		local hp = model:GetAttribute("Health")

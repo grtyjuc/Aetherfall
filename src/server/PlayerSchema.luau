@@ -3,11 +3,15 @@ local Shared = if script then game:GetService("ReplicatedStorage"):WaitForChild(
 local Equipment = if Shared then require(Shared.EquipmentRules) else require("../shared/EquipmentRules")
 local Progression = if Shared then require(Shared.ProgressionRules) else require("../shared/ProgressionRules")
 
-local Schema = { version = 1 }
+local Quest = if Shared then require(Shared.QuestRules) else require("../shared/QuestRules")
+
+local Schema = { version = 2 }
 local MAX_ITEMS = 200
 local MAX_CLAIMS = 128
 local MAX_SEQUENCE = 1e9
 local currentFields = { className = true, level = true, inventory = true, equipped = true,
+	nextId = true, xp = true, gold = true, claimedRewards = true, quests = true }
+local versionOneFields = { className = true, level = true, inventory = true, equipped = true,
 	nextId = true, xp = true, gold = true, claimedRewards = true }
 local legacyFields = { className = true, level = true, inventory = true, equipped = true, nextId = true }
 local instanceFields = { uid = true, itemId = true, upgradeLevel = true, locked = true }
@@ -55,8 +59,10 @@ local function copy(value)
 	return result
 end
 
-local function profileShape(profile, legacy)
-	if not onlyFields(profile, if legacy then legacyFields else currentFields) then
+local function profileShape(profile, version)
+	local legacy = version == 0
+	local fields = if legacy then legacyFields elseif version == 1 then versionOneFields else currentFields
+	if not onlyFields(profile, fields) then
 		return false, "Profile contains unknown fields."
 	end
 	if not integer(profile.nextId, 1, MAX_SEQUENCE) then return false, "Invalid inventory sequence." end
@@ -95,16 +101,22 @@ local function profileShape(profile, legacy)
 end
 
 function Schema.newProfile(className)
-	return Progression.newProfile(className or "Sentinel")
+	local profile = Progression.newProfile(className or "Sentinel")
+	Quest.ensure(profile)
+	return profile
 end
 
 function Schema.encode(profile)
 	assert(boundedTree(profile), "Profile is not bounded serializable data.")
-	local ok, reason = profileShape(profile, false)
+	-- Callers constructing new progression profiles may not yet have quest state.
+	-- Normalize a copy; encoding must never mutate live state.
+	local normalized = copy(profile)
+	Quest.ensure(normalized)
+	local ok, reason = profileShape(normalized, Schema.version)
 	assert(ok, reason)
-	ok, reason = Progression.validate(profile)
+	ok, reason = Quest.validateProfile(normalized)
 	assert(ok, reason)
-	return { version = Schema.version, data = copy(profile) }
+	return { version = Schema.version, data = normalized }
 end
 
 function Schema.decode(raw)
@@ -113,18 +125,18 @@ function Schema.decode(raw)
 	if not boundedTree(raw) or not onlyFields(raw, { version = true, data = true }) then
 		return nil, "Save envelope contains unsupported or oversized data."
 	end
-	if raw.version ~= 0 and raw.version ~= Schema.version then
+	if raw.version ~= 0 and raw.version ~= 1 and raw.version ~= Schema.version then
 		return nil, "Unsupported save version."
 	end
-	local legacy = raw.version == 0
-	local ok, reason = profileShape(raw.data, legacy)
+	local ok, reason = profileShape(raw.data, raw.version)
 	if not ok then return nil, reason end
 	local profile = copy(raw.data)
-	if legacy then
-		-- Explicit version-0 migration fixture; no old production saves are assumed to exist.
+	if raw.version == 0 then
+		-- Explicit equipment-only migration; no old production saves are assumed.
 		profile.xp, profile.gold, profile.claimedRewards = 0, 0, {}
 	end
-	ok, reason = Progression.validate(profile)
+	if raw.version < Schema.version then Quest.ensure(profile) end
+	ok, reason = Quest.validateProfile(profile)
 	if not ok then return nil, reason end
 	return profile
 end

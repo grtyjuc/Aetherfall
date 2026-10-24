@@ -4,21 +4,28 @@
 
 Run `python3 scripts/check.py` from the repository root. Tool pins are in `scripts/setup_tools.py`.
 
-- Eighteen runtime sources compile. This checks syntax, not Roblox API types.
+- Twenty-eight runtime sources compile. This checks syntax, not Roblox API types.
 - 24 equipment tests: all class starters; ownership/class/level/slot rejection; malformed inputs; exact stat changes/removal; repeated equip; two-handed conflicts; bow/quiver exceptions; accessory movement and uniqueness; independent snapshots; inventory preservation during mixed actions.
 - All 36 models construct in Lune's Roblox data model, covering 19 silhouettes. Geometry must be finite and positive, with a Handle PrimaryPart, anchored/noninteractive parts, at most 30 parts/model, and no scripts/external assets. Invalid definitions fail explicitly.
 - Workshop tests verify a part budget below 400, six displays, finite transforms, spawn/prompt settings, preserved existing objects, idempotent construction and safe reserved-name conflict handling.
 - Rojo builds the `.rbxl`. A separate test deserializes it and checks actual script classes, sources, service locations and streaming enabled.
 - 31 pure combat-rule tests cover all class basics/skills, knife versus bow, exact costs, cooldown boundaries/spam, combo progression/reset, dead/unequipped rejection, shield requirements, target/range/facing/line-of-sight flags, regeneration, malformed times and deterministic damage/critical rolls. Geometry flags in this suite are supplied by the test, not live physics.
-- 18 tests exercise the actual CombatService request handlers with mocked clocks, network signals and physics queries. They cover ignoring injected damage values, registered targets, range/facing/LOS rejection, cooldown and request spam, class/equipment state preservation, no healing/revival from gear, dagger melee, per-player resource isolation/shared target health, area damage, target recovery, clear/blocked/ungrounded dash behavior, malformed requests and lifecycle cleanup. Raycast/Blockcast outcomes are mocked; this does not prove live wall collision behavior.
+- 21 tests exercise the actual CombatService request handlers with mocked clocks, network signals and physics queries. They cover ignoring injected damage values, registered targets, range/facing/LOS rejection, cooldown and request spam, class/equipment state preservation, no healing/revival from gear, dagger melee, per-player resource isolation/shared target health, area damage, target recovery, clear/blocked/ungrounded dash behavior, malformed requests and lifecycle cleanup. Raycast/Blockcast outcomes are mocked; this does not prove live wall collision behavior.
 - Attachment construction verifies R6/R15, every weapon, quivers, unanchored massless welded parts, repeated replacement, cleanup and scaled R6 hand offsets. These checks do not simulate character physics.
-- Training-ground construction verifies three unique server-readable targets, finite/queryable hitboxes, health labels, repeatability and nearby targets suitable for Flame Burst. World geometry totals 284 static parts (187 workshop + 82 training + 15 mentor), excluding character attachments and transient effects.
+- Training-ground construction verifies three unique server-readable targets, finite/queryable hitboxes, health labels, repeatability and nearby targets suitable for Flame Burst. The workshop/training/mentor geometry totals 284 static parts; the village adds 302. Enemies, character attachments and transient effects are checked separately.
 
 - 21 progression-rule tests cover XP thresholds, multiple levels/cap, stat growth, atomic once-only rewards, currency/inventory limits and class starter grants.
-- 21 schema tests validate round trips, independent copies, limits, corrupt/future records, identity collisions, cycles and explicit version-zero migration.
+- 27 schema tests validate round trips, independent copies, limits, corrupt/future records, identity collisions, cycles, version-zero migration and version-one upgrade to quest schema version 2.
 - 27 session-store tests exercise session leases, expiry/takeover, retried callbacks, transient errors, lost responses after commit, stable snapshots, competing writes and failed final saves.
 - 20 PlayerDataService tests cover safe loading/fallback, truthful status, autosave, newer mutations during yielding saves, departure/shutdown cleanup, retained final-save failures, retry spacing and negative Studio IDs.
 - 14 training-reward tests cover milestone uniqueness, all class rewards, persisted claims, partial session progress, proximity/alive checks, invalid client requests, loading/lost sessions and the original mentor model.
+
+- 22 quest-rule tests cover both quest flows, NPC visit order, accepted defeat counters, bounded state, once-only rewards and claim/state consistency.
+- 15 QuestService tests exercise prompt distance/alive/save-owner checks, dialogue, Sync-only requests, rate limiting, persistence and player isolation.
+- 17 EnemyService tests exercise model construction, state transitions, telegraphs, impact checks, sanctuary/leash limits, ranged aggro, stun interruption, contributor credit, query flags and generation-based respawn with mocked physics.
+- 16 enemy-reward tests verify server amounts, per-spawn generation credit, stale replay rejection, player isolation, currency caps, stat growth and bounded memory without filling permanent reward history.
+- Village construction checks verify 302 finite anchored parts, NPC/rest prompt metadata, four spawn markers across three families, preservation and repeatability.
+- Rest-point checks cover proximity, alive state, save ownership, cooldown and cleanup. Audio manifest checks cover six silent events, group/volume/rolloff metadata and accepted sound ID formats; no playback is simulated.
 
 ## Pending Studio playtests
 
@@ -58,7 +65,7 @@ Open the built place and use **Play**, then **Server & Clients** with two client
 | Reduced motion | Stops grip swings and moving/burst effects; damage text and all gameplay remain available |
 | Character rigs | R6/R15 and scaled avatars hold gear at the hand/forearm/back without anchoring, flinging or collisions |
 
-The Studio playtests above have **not been run**. Pure and mocked tests do not replace live playtesting. Full body animations, enemy retaliation/AI, dodging invulnerability, audio and story quests are not implemented yet. Live DataStore persistence has not been exercised here.
+The Studio playtests above have **not been run**. Pure and mocked tests do not replace live playtesting. Full body animations, dodge invulnerability and bosses are not implemented yet. The new village, enemies and quests require the additional Studio checks below. Audio hooks have no assets configured. Live DataStore persistence has not been exercised here.
 
 ## Pending save/load acceptance
 
@@ -80,3 +87,24 @@ Use a private published test experience with Studio API access enabled. These te
 | Corrupt/future schema | Character is refused without reset or write; readable error reaches both HUD and inventory |
 | Shutdown retries | Final failures retain closing profiles and retry within the shutdown deadline; no tight loops |
 | Portrait/landscape | XP/objectives/save messages are readable and do not hide essential combat controls |
+
+## Pending village acceptance
+
+| Check | Expected result |
+| --- | --- |
+| Reach village | From spawn, the right-side path goes around the workshop to Rowan's plaza without falling or blocked doors |
+| First quest | Rowan accepts introduction; Tessa visit advances it; Rowan awards 100 XP, 20 gold and lantern once |
+| Second quest | Rowan accepts after introduction; four credited creature defeats update the tracker; Rowan awards 150 XP, 60 gold and charm once |
+| Save upgrade | Previous version-one character retains inventory/XP/gold/claims and starts with new quest defaults |
+| Rejoin mid-quest | NPC visit stage, field acceptance and defeat count persist after a confirmed save |
+| Enemy AI | Slimes, boar and thornling patrol, notice nearby field players, pursue, telegraph, attack and return if leashed |
+| Dodge/stun | Leaving impact range avoids damage; Shield Bash interrupts a windup and pauses the enemy for one second |
+| Sanctuary | Creatures cannot attack village players, and players cannot shoot creatures from the safe village or outside the encounter leash |
+| Defeat/respawn | Health zero grants credit once; corpse does not block shots; after ten seconds it resets at home with a new generation |
+| Cooperative credit | Recent nearby contributors each receive XP/gold and accepted quest credit once; stale, departed or paused players receive none |
+| Rest well | Nearby living players heal at most once per ten seconds; remote prompt spoofing and defeated characters cannot heal |
+| Dialogue input | Continue/Escape/B dismiss dialogue; clicking or using controls during dialogue never attacks |
+| Streaming/layout | Streamed-out targets/NPCs cause no errors; quest/XP/save panels and dialogue remain readable on phone and controller |
+| Silent audio | Empty IDs issue no audio requests or errors; configured permitted IDs play through correct groups with volume controls |
+
+Complete these new checks in Studio; pure rules, data-model construction and mocked physics do not establish live pathing, playback or multiplayer behavior.

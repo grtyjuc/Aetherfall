@@ -87,8 +87,26 @@ function CombatService:_label(target)
 		local health = target:GetAttribute("Health")
 		label.Text = if health > 0
 			then string.format("%d / %d", math.ceil(health), target:GetAttribute("MaxHealth"))
-			else "Recovering · 4 seconds"
+			else if target:GetAttribute("Enemy") == true then "Defeated · returning soon" else "Recovering · 4 seconds"
 	end
+end
+
+-- Only server-created targets enter this registry; no client can register an Instance.
+function CombatService:registerTarget(target)
+	assert(target and target:IsA("Model") and target.PrimaryPart, "Combat target requires a model and hitbox")
+	local id = target:GetAttribute("TargetId")
+	assert(type(id) == "string" and #id > 0 and #id <= 40, "Invalid target identifier")
+	assert(not self.targets[id] or self.targets[id] == target, "Duplicate combat target identifier")
+	local maximum, health, defence = target:GetAttribute("MaxHealth"), target:GetAttribute("Health"), target:GetAttribute("Defence")
+	assert(finite(maximum) and maximum > 0 and maximum <= 1e6, "Invalid target maximum health")
+	assert(finite(health) and health >= 0 and health <= maximum, "Invalid target health")
+	assert(finite(defence) and defence >= 0 and defence <= 1e6, "Invalid target defence")
+	self.targets[id] = target
+	self:_label(target)
+end
+
+function CombatService:unregisterTarget(id)
+	self.targets[id] = nil
 end
 
 function CombatService:_sendState(player)
@@ -140,6 +158,7 @@ function CombatService:_characterAdded(player, character)
 		if self.destroyed or self.states[player] ~= entry or player.Character ~= character then return end
 		if not humanoid or not humanoid:IsA("Humanoid") then return end
 		self:_applyStats(player, true)
+		character:SetAttribute("AetherfallSpawnProtectedUntil", os.clock() + 2)
 		entry.combat.mana = Config.maxMana
 		entry.combat.stamina = Config.maxStamina
 		entry.combat.combo = 0
@@ -225,8 +244,12 @@ function CombatService:_damageTarget(player, action, result, target, origin, now
 		target:GetAttribute("Defence"), self.random:NextNumber())
 	local remaining = math.max(0, target:GetAttribute("Health") - damage)
 	target:SetAttribute("Health", remaining)
-	if remaining == 0 then target:SetAttribute("DownUntil", now + 4) end
+	if target:GetAttribute("Enemy") == true and result.name == "Shield Bash" and remaining > 0 then
+		target:SetAttribute("StunnedUntil", now + 1)
+	end
+	if remaining == 0 and target:GetAttribute("Enemy") ~= true then target:SetAttribute("DownUntil", now + 4) end
 	self:_label(target)
+	if self.options.onTargetDamaged then self.options.onTargetDamaged(player, target, damage, remaining == 0) end
 	self.feedback:FireAllClients({
 		kind = result.kind,
 		actorUserId = player.UserId,
@@ -269,6 +292,10 @@ function CombatService:_request(player, action, targetId)
 	local definition = Config.getAction(profile.className, action, mainHand and mainHand.family)
 	local target = targetId and self.targets[targetId]
 	local validTarget = target ~= nil and target.Parent ~= nil and target:GetAttribute("Health") > 0
+	if validTarget and definition.kind ~= "Dash" and self.options.canTarget then
+		local allowed, reason = self.options.canTarget(player, target)
+		if not allowed then self:_reject(player, reason or "This target cannot be attacked here."); return end
+	end
 	local origin = if root then root.Position + Vector3.new(0, 1, 0) else Vector3.zero
 	local distance, aimDot, lineOfSight = math.huge, -1, false
 	if validTarget and root then
@@ -311,6 +338,7 @@ function CombatService:_request(player, action, targetId)
 		for _, secondary in self.targets do
 			if secondary.Parent and secondary:GetAttribute("Health") > 0
 				and (secondary.PrimaryPart.Position - center).Magnitude <= result.radius
+				and (not self.options.canTarget or self.options.canTarget(player, secondary))
 				and self:_lineOfSight(character, origin, secondary) then
 				self:_damageTarget(player, action, result, secondary, origin, now)
 			end
@@ -328,7 +356,7 @@ function CombatService:_tick(now)
 		self:_sendState(player)
 	end
 	for _, target in self.targets do
-		if target.Parent and target:GetAttribute("Health") <= 0 and now >= target:GetAttribute("DownUntil") then
+		if target:GetAttribute("Enemy") ~= true and target.Parent and target:GetAttribute("Health") <= 0 and now >= target:GetAttribute("DownUntil") then
 			target:SetAttribute("Health", target:GetAttribute("MaxHealth"))
 			target:SetAttribute("DownUntil", 0)
 			self:_label(target)

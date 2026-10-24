@@ -33,6 +33,9 @@ local function makeCharacter()
 	root.CFrame = CFrame.new(0, 3, 0)
 	root.Position = Vector3.new(0, 3, 0)
 	local character = {}
+	local attributes = {}
+	function character:SetAttribute(name, value) attributes[name] = value end
+	function character:GetAttribute(name) return attributes[name] end
 	function character:FindFirstChildOfClass(name) return if name == "Humanoid" then humanoid else nil end
 	function character:FindFirstChild(name) return if name == "HumanoidRootPart" then root else nil end
 	function character:WaitForChild(name) return if name == "Humanoid" then humanoid else root end
@@ -378,6 +381,50 @@ test("multi-target skill invokes progression hook once per accepted action", fun
 	assert(#f.service.feedback.broadcasts == 2 and calls == 1)
 	f:request(player, "Skill", "dummy_1")
 	assert(calls == 1)
+	f.service:destroy()
+end)
+
+test("server enemy registry preserves health, reports hits and leaves respawns to enemy AI", function()
+	local f = fixture(); local player = f:addPlayer(1)
+	local enemy = f.targets[1]:Clone()
+	enemy.Name = "Enemy"
+	enemy:SetAttribute("TargetId", "enemy_slime_1")
+	enemy:SetAttribute("Enemy", true)
+	enemy:SetAttribute("Health", 1)
+	enemy:SetAttribute("DownUntil", 0)
+	enemy.Parent = f.targets[1].Parent
+	f.service:registerTarget(enemy)
+	assert(enemy:GetAttribute("Health") == 1)
+	local called = 0
+	f.service.options.onTargetDamaged = function(actor, target, damage, dead)
+		assert(actor == player and target == enemy and damage > 0 and dead)
+		called += 1
+	end
+	f:request(player, "Basic", "enemy_slime_1")
+	assert(enemy:GetAttribute("Health") == 0 and called == 1)
+	f:advance(5)
+	assert(enemy:GetAttribute("Health") == 0, "Dummy timer must never resurrect a live enemy")
+	f.service:unregisterTarget("enemy_slime_1")
+	f:request(player, "Basic", "enemy_slime_1")
+	assert(called == 1)
+	f.service:destroy()
+end)
+
+test("encounter permissions reject sanctuary shooting without consuming resources", function()
+	local f = fixture(); local player = f:addPlayer(1, "Spellweaver")
+	f.service.options.canTarget = function() return false, "Leave the sanctuary." end
+	f:request(player, "Basic", "dummy_1")
+	assert(f:lastMessage() == "Leave the sanctuary.")
+	assert(f.targets[1]:GetAttribute("Health") == 300 and f.service.states[player].combat.mana == 100)
+	f.service:destroy()
+end)
+
+test("Shield Bash marks a surviving registered enemy stunned", function()
+	local f = fixture(); local player = f:addPlayer(1)
+	f.targets[1]:SetAttribute("Enemy", true)
+	f:request(player, "Skill", "dummy_1")
+	assert(f.targets[1]:GetAttribute("Health") > 0)
+	assert(f.targets[1]:GetAttribute("StunnedUntil") == f.now + 1)
 	f.service:destroy()
 end)
 

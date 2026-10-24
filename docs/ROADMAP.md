@@ -7,8 +7,8 @@ Development is split into small milestones. Each milestone needs automated check
 | Equipment workshop | 36 items, procedural models, equip rules, inventory UI and blacksmith courtyard | Implemented; Studio playtests pending |
 | Combat training | Held weapons, class attacks and skills, training dummies, resource HUD and server validation | Implemented; Studio playtests pending |
 | Player progression | Versioned saves, inventory rewards, XP and levels | Implemented; live Studio save/load acceptance pending |
-| Hearthglen village | NPC dialogue, three enemy families, two quests and audio integration | Next |
-| Hearthglen Valley | Levels 1–10, expanded abilities, loot, quest progression and Briarwarden | Planned |
+| Hearthglen village | NPC dialogue, three enemy families, two quests and silent audio hooks | Implemented; new Studio acceptance pending |
+| Hearthglen Valley | Levels 1–10, expanded abilities, loot, quest progression and Briarwarden | Next |
 | Core RPG systems | Crafting, upgrades, skill trees, parties and the first dungeon | Planned |
 | World expansion | Emberwood, Crystal Fen, Stormreach and Hollow Spire, developed one region at a time | Planned |
 | Endgame and polish | Boss variants, story choices, achievements, accessibility and performance | Planned |
@@ -21,6 +21,8 @@ Later updates will add regional materials and silhouettes, weapon-specific timin
 
 ## Next acceptance checks
 
-- Complete the current Studio playtest checklist.
+- Complete the new village/quest/enemy Studio checklist; earlier builds have had initial smoke testing.
 - Verify save/load, concurrent sessions and failed-load handling before adding persistent rewards.
 - Ensure rejoining preserves validated inventory and progression without duplicate rewards.
+
+The current village uses schema version 2, with migration from the previous progression build. Enemy families have distinct models and balance but share the first melee AI; advanced patterns, bosses and full body animations remain future work. Audio hooks are silent until permitted asset IDs are configured.

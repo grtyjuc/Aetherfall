@@ -18,6 +18,11 @@ local CombatService = require(script.Parent.CombatService)
 local Visuals = require(script.Parent.EquipmentVisuals)
 local PlayerDataService = require(script.Parent.PlayerDataService)
 local TrainingRewards = require(script.Parent.TrainingRewards)
+local VillageWorld = require(script.Parent.VillageWorld)
+local QuestService = require(script.Parent.QuestService)
+local EnemyService = require(script.Parent.EnemyService)
+local EnemyRewards = require(script.Parent.EnemyRewards)
+local RestService = require(script.Parent.RestService)
 local remotes = Instance.new("Folder")
 remotes.Name = "WorkshopRemotes"
 local request = Instance.new("RemoteFunction")
@@ -30,25 +35,62 @@ local profiles, buckets, visualConnections = {}, {}, {}
 local shuttingDown = false
 local world = World.build(Catalog, Models)
 local trainingWorld = TrainingWorld.build()
-local data, rewards, combat
+local village = VillageWorld.build()
+local data, rewards, combat, quests, enemies, enemyRewards, rest
 
 data = PlayerDataService.new(profiles, { onStatus = function(player)
 	if rewards then rewards:changed(player) end
+	if quests then quests:changed(player) end
 end })
 local function changed(player, classChanged)
 	data:markDirty(player)
 	combat:equipmentChanged(player, classChanged == true)
 	if player.Character then Visuals.apply(player.Character, profiles[player]) end
 	rewards:changed(player)
+	if quests then quests:changed(player) end
+end
+local function canAct(player)
+	return not shuttingDown and data:getStatus(player).canPlay
 end
 rewards = TrainingRewards.new(profiles, remotes, {
 	getSaveStatus = function(player) return data:getStatus(player) end,
 	onChanged = function(player) changed(player, false) end,
 })
 combat = CombatService.new(profiles, remotes, trainingWorld, {
-	canAct = function(player) return not shuttingDown and data:getStatus(player).canPlay end,
+	canAct = canAct,
+	canTarget = function(player, target)
+		if target:GetAttribute("Enemy") ~= true then return true end
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not root or root.Position.X < 48 then return false, "Leave the village safe area before attacking creatures." end
+		local home, leash = target:GetAttribute("SpawnHome"), target:GetAttribute("LeashDistance")
+		if typeof(home) ~= "Vector3" or type(leash) ~= "number" or (root.Position - home).Magnitude > leash then
+			return false, "Move into the creature's encounter area before attacking."
+		end
+		return true
+	end,
+	onTargetDamaged = function(player, target, damage, defeated)
+		if enemies then enemies:onDamaged(player, target, damage, defeated) end
+	end,
 	onAction = function(player, action, result) rewards:recordAction(player, action, result) end,
 })
+quests = QuestService.new(profiles, remotes, village, {
+	canAct = canAct, onChanged = function(player) changed(player, false) end,
+})
+enemyRewards = EnemyRewards.new(profiles, {
+	canAct = canAct,
+	onQuestDefeat = function(player, kind) quests:recordDefeat(player, kind) end,
+	onChanged = function(player, summary)
+		changed(player, false)
+		rewards:changed(player, string.format("Creature defeated: +%d XP, +%d gold", summary.xp, summary.gold))
+	end,
+})
+enemies = EnemyService.new(profiles, combat, village, {
+	canAct = canAct,
+	onDefeat = function(player, kind, killId) enemyRewards:recordDefeat(player, kind, killId) end,
+})
+rest = RestService.new(profiles, village, { canAct = canAct, onRest = function(player)
+	rewards:changed(player, "Rested at the village well. Health restored.")
+end })
 
 local function attachCharacter(player, character)
 	task.spawn(function()
@@ -66,6 +108,7 @@ local function addPlayer(player)
 	if shuttingDown or buckets[player] then return end
 	buckets[player] = { tokens = 8, time = os.clock() }
 	rewards:addPlayer(player)
+	quests:addPlayer(player)
 	visualConnections[player] = player.CharacterAdded:Connect(function(character)
 		attachCharacter(player, character)
 	end)
@@ -76,12 +119,17 @@ local function addPlayer(player)
 		combat:addPlayer(player)
 		if player.Character then attachCharacter(player, player.Character) end
 		rewards:changed(player)
+		quests:changed(player)
 	end)
 end
 local addedConnection = Players.PlayerAdded:Connect(addPlayer)
 local removingConnection = Players.PlayerRemoving:Connect(function(player)
 	combat:removePlayer(player)
 	rewards:removePlayer(player)
+	quests:removePlayer(player)
+	enemies:removePlayer(player)
+	enemyRewards:removePlayer(player)
+	rest:removePlayer(player)
 	if visualConnections[player] then visualConnections[player]:Disconnect() end
 	visualConnections[player] = nil
 	buckets[player] = nil
@@ -132,6 +180,10 @@ local function shutdown()
 	removingConnection:Disconnect()
 	if promptConnection then promptConnection:Disconnect() end
 	data:close()
+	enemies:destroy()
+	enemyRewards:destroy()
+	quests:destroy()
+	rest:destroy()
 	combat:destroy()
 	rewards:destroy()
 	for _, connection in visualConnections do connection:Disconnect() end
