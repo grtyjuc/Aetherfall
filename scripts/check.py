@@ -31,9 +31,17 @@ def main():
     run(lune, "run", "tests/combat-service.spec.luau")
     run(lune, "run", "tests/attachments.spec.luau")
     run(lune, "run", "tests/training-world.spec.luau")
+    run(lune, "run", "tests/progression.spec.luau")
+    run(lune, "run", "tests/schema.spec.luau")
+    run(lune, "run", "tests/session-store.spec.luau")
+    run(lune, "run", "tests/player-data.spec.luau")
+    run(lune, "run", "tests/rewards.spec.luau")
     (ROOT / "build").mkdir(exist_ok=True)
-    run(rojo, "build", "default.project.json", "--output", "build/Aetherfall-Step-2.rbxl")
+    run(rojo, "build", "default.project.json", "--output", "build/Aetherfall-Step-3.rbxl")
     run(lune, "run", "tests/place.spec.luau")
+    (ROOT / "studio").mkdir(exist_ok=True)
+    shutil.copyfile(ROOT / "build/Aetherfall-Step-3.rbxl", ROOT / "studio/Aetherfall.rbxl")
+    print("Packaged studio/Aetherfall.rbxl", flush=True)
 
 
 if __name__ == "__main__":

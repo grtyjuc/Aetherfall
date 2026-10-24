@@ -6,8 +6,8 @@ Development is split into small milestones. Each milestone needs automated check
 | --- | --- | --- |
 | Equipment workshop | 36 items, procedural models, equip rules, inventory UI and blacksmith courtyard | Implemented; Studio playtests pending |
 | Combat training | Held weapons, class attacks and skills, training dummies, resource HUD and server validation | Implemented; Studio playtests pending |
-| Player progression | Versioned saves, inventory rewards, XP and levels | Next |
-| Hearthglen village | NPC dialogue, three enemy families, two quests and audio integration | Planned |
+| Player progression | Versioned saves, inventory rewards, XP and levels | Implemented; live Studio save/load acceptance pending |
+| Hearthglen village | NPC dialogue, three enemy families, two quests and audio integration | Next |
 | Hearthglen Valley | Levels 1–10, expanded abilities, loot, quest progression and Briarwarden | Planned |
 | Core RPG systems | Crafting, upgrades, skill trees, parties and the first dungeon | Planned |
 | World expansion | Emberwood, Crystal Fen, Stormreach and Hollow Spire, developed one region at a time | Planned |

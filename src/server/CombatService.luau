@@ -4,6 +4,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Catalog = require(Shared.EquipmentCatalog)
 local EquipmentRules = require(Shared.EquipmentRules)
+local Progression = require(Shared.ProgressionRules)
 local Config = require(Shared.CombatConfig)
 local Rules = require(Shared.CombatRules)
 
@@ -40,9 +41,10 @@ local function remote(parent, name)
 	return event
 end
 
-function CombatService.new(profiles, remotes, trainingWorld)
+function CombatService.new(profiles, remotes, trainingWorld, options)
 	local self = setmetatable({
 		profiles = profiles,
+		options = options or {},
 		states = {},
 		targets = {},
 		random = Random.new(),
@@ -94,7 +96,7 @@ function CombatService:_sendState(player)
 	if not entry or not profile then return end
 	if not self.stateEvent:IsDescendantOf(ReplicatedStorage) then return end
 	local _, humanoid = characterParts(player)
-	local stats = EquipmentRules.stats(profile)
+	local stats = Progression.stats(profile)
 	local definition = Config.Classes[profile.className]
 	local mainHand = equippedItem(profile, "MainHand")
 	local basic = Config.getAction(profile.className, "Basic", mainHand and mainHand.family)
@@ -119,7 +121,7 @@ function CombatService:_applyStats(player, fullHealth)
 	local profile = self.profiles[player]
 	local _, humanoid = characterParts(player)
 	if not profile or not humanoid then return end
-	local stats = EquipmentRules.stats(profile)
+	local stats = Progression.stats(profile)
 	local health = humanoid.Health
 	humanoid.MaxHealth = stats.MaxHealth
 	-- Equipment changes never heal or revive. A genuine respawn starts at full health.
@@ -219,7 +221,7 @@ end
 function CombatService:_damageTarget(player, action, result, target, origin, now)
 	if target:GetAttribute("Health") <= 0 then return end
 	local profile = self.profiles[player]
-	local damage, critical = Rules.damage(EquipmentRules.stats(profile), result,
+	local damage, critical = Rules.damage(Progression.stats(profile), result,
 		target:GetAttribute("Defence"), self.random:NextNumber())
 	local remaining = math.max(0, target:GetAttribute("Health") - damage)
 	target:SetAttribute("Health", remaining)
@@ -254,6 +256,10 @@ function CombatService:_request(player, action, targetId)
 	if type(action) ~= "string" or (action ~= "Basic" and action ~= "Skill" and action ~= "Sync")
 		or (targetId ~= nil and (type(targetId) ~= "string" or #targetId > 40)) then
 		self:_reject(player, "Invalid combat request.")
+		return
+	end
+	if self.options.canAct and not self.options.canAct(player) then
+		self:_reject(player, "Your character is loading or save ownership was lost. Actions are paused.")
 		return
 	end
 	Rules.refresh(entry.combat, now)
@@ -312,6 +318,7 @@ function CombatService:_request(player, action, targetId)
 	else
 		self:_damageTarget(player, action, result, target, origin, now)
 	end
+	if self.options.onAction then self.options.onAction(player, action, result) end
 	self:_sendState(player)
 end
 

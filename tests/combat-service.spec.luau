@@ -4,6 +4,7 @@ local fs = require("@lune/fs")
 local roblox = require("@lune/roblox")
 local Catalog = require("../src/shared/EquipmentCatalog")
 local EquipmentRules = require("../src/shared/EquipmentRules")
+local Progression = require("../src/shared/ProgressionRules")
 local Config = require("../src/shared/CombatConfig")
 local CombatRules = require("../src/shared/CombatRules")
 local Vector3, CFrame = roblox.Vector3, roblox.CFrame
@@ -45,6 +46,7 @@ local function fixture()
 	local replicatedStorage = { Name = "ReplicatedStorage" }
 	local shared = {
 		EquipmentCatalog = Catalog, EquipmentRules = EquipmentRules,
+		ProgressionRules = Progression,
 		CombatConfig = Config, CombatRules = CombatRules,
 	}
 	function replicatedStorage:WaitForChild(name) assert(name == "Shared"); return shared end
@@ -149,7 +151,7 @@ end
 test("accepted handler derives damage on server and ignores injected damage arguments", function()
 	local f = fixture()
 	local player = f:addPlayer(1)
-	local expected = EquipmentRules.stats(f.profiles[player]).Attack * 100 / 110
+	local expected = Progression.stats(f.profiles[player]).Attack * 100 / 110
 	f:request(player, "Basic", "dummy_1", 1e9)
 	assert(math.abs(f.targets[1]:GetAttribute("Health") - (300 - expected)) < 0.001)
 	assert(f.service.states[player].combat.stamina == 94)
@@ -224,8 +226,8 @@ test("equipment applies speed/max-health without healing or reviving", function(
 	assert(EquipmentRules.equip(profile, uidFor(profile, "briarheart_talisman"), "Accessory1"))
 	f.service:equipmentChanged(player, false)
 	assert(player.humanoid.Health == 40)
-	assert(player.humanoid.MaxHealth == EquipmentRules.stats(profile).MaxHealth)
-	assert(player.humanoid.WalkSpeed == EquipmentRules.stats(profile).MoveSpeed)
+	assert(player.humanoid.MaxHealth == Progression.stats(profile).MaxHealth)
+	assert(player.humanoid.WalkSpeed == Progression.stats(profile).MoveSpeed)
 	player.humanoid.Health = 0
 	f.service:equipmentChanged(player, false)
 	assert(player.humanoid.Health == 0)
@@ -346,6 +348,36 @@ test("remove/destroy disconnect lifecycle handlers and invalidate further reques
 	f.service:destroy()
 	assert(not f.service.requestConnection.Connected and not f.service.heartbeat.Connected)
 	assert(f.service.request.destroyed and f.service.stateEvent.destroyed and f.service.feedback.destroyed)
+	f.service:destroy()
+end)
+
+test("save readiness blocks actions and hooks only accepted combat", function()
+	local f = fixture(); local player = f:addPlayer(1)
+	local canPlay, calls = false, 0
+	f.service.options = { canAct = function() return canPlay end, onAction = function(actor, action, result)
+		assert(actor == player and action == "Basic" and result.kind == "Melee")
+		calls += 1
+	end }
+	f:request(player, "Basic", "dummy_1")
+	assert(f.targets[1]:GetAttribute("Health") == 300 and calls == 0)
+	assert(f.service.states[player].combat.stamina == 100)
+	canPlay = true
+	f:request(player, "Basic", "dummy_1")
+	assert(f.targets[1]:GetAttribute("Health") < 300 and calls == 1)
+	f.service:destroy()
+end)
+
+test("multi-target skill invokes progression hook once per accepted action", function()
+	local f = fixture(); local player = f:addPlayer(1, "Spellweaver")
+	local calls = 0
+	f.service.options = { onAction = function(_, action, result)
+		assert(action == "Skill" and result.kind == "Area")
+		calls += 1
+	end }
+	f:request(player, "Skill", "dummy_1")
+	assert(#f.service.feedback.broadcasts == 2 and calls == 1)
+	f:request(player, "Skill", "dummy_1")
+	assert(calls == 1)
 	f.service:destroy()
 end)
 

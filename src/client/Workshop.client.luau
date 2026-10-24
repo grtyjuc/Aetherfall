@@ -56,7 +56,7 @@ make("UICorner", root, { CornerRadius = UDim.new(0, 12) })
 make("UIStroke", root, { Color = colors.gold, Thickness = 1, Transparency = 0.4 })
 label(root, "AETHERFALL  /  THE HEARTHGLEN ARMOURY", UDim2.fromOffset(14, 5), UDim2.new(1, -70, 0, 34), 16, colors.gold)
 button(root, "×", UDim2.new(1, -48, 0, 8), UDim2.fromOffset(36, 32), function() root.Visible = false end)
-label(root, "Installment 2 · Equip, close this panel, then train at the dummies · NOT saved", UDim2.fromOffset(14, 40), UDim2.new(1, -28, 0, 32), 12, colors.muted)
+local saveNotice = label(root, "Loading your character…", UDim2.fromOffset(14, 40), UDim2.new(1, -28, 0, 32), 12, colors.muted)
 
 local state, selectedUid, selectedSlot, category = nil, nil, nil, "All"
 local accessoryTarget = "Accessory1"
@@ -206,6 +206,17 @@ render = function()
 		if a.item.level ~= b.item.level then return a.item.level < b.item.level end
 		return a.item.name < b.item.name
 	end)
+	if #sorted == 0 then
+		selectedUid = nil
+		itemTitle.Text = "No equipment owned"
+		itemMeta.Text = "Select a class to receive its starter loadout."
+		itemDescription.Text, itemStats.Text, derived.Text = "", "", ""
+		previewWorld:ClearAllChildren()
+		previewId = nil
+		for _, b in accessoryTargets do b.Visible = false end
+		for slot, b in slotButtons do b.Text = slotNames[slot] .. ": Empty" end
+		return
+	end
 	if not selectedUid or not state.inventory[selectedUid] then selectedUid = sorted[1].uid end
 	for index, entry in sorted do
 		local uid, item = entry.uid, entry.item
@@ -265,4 +276,31 @@ remotes.OpenEquipment.OnClientEvent:Connect(function()
 	root.Visible = true
 	transact("Snapshot")
 end)
+local function showSaveStatus()
+	local player = Players.LocalPlayer
+	local mode = player:GetAttribute("AetherfallSaveMode") or "Loading"
+	local message = player:GetAttribute("AetherfallSaveMessage") or "Loading your character…"
+	saveNotice.Text = (if mode == "SessionOnly" then "SESSION ONLY · " else "") .. message
+	saveNotice.TextColor3 = if mode == "Lost" or mode == "SessionOnly" then colors.error else colors.muted
+	if not state and (mode == "Persistent" or mode == "SessionOnly") then
+		task.defer(function() transact("Snapshot") end)
+	end
+end
+local modeConnection = Players.LocalPlayer:GetAttributeChangedSignal("AetherfallSaveMode"):Connect(showSaveStatus)
+local messageConnection = Players.LocalPlayer:GetAttributeChangedSignal("AetherfallSaveMessage"):Connect(showSaveStatus)
+showSaveStatus()
 transact("Snapshot")
+-- DataStore reads can outlast the first menu request; readiness attributes also retry later.
+task.spawn(function()
+	for _ = 1, 30 do
+		if state or not screen.Parent then return end
+		task.wait(2)
+		if screen.Parent and not state then transact("Snapshot") end
+	end
+end)
+script.Destroying:Connect(function()
+	modeConnection:Disconnect()
+	messageConnection:Disconnect()
+	ContextActionService:UnbindAction("AetherfallArmoury")
+	screen:Destroy()
+end)

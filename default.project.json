@@ -1,5 +1,5 @@
 {
-  "name": "Aetherfall — Equipment and Combat Training",
+  "name": "Aetherfall — Training and Progression",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {

@@ -82,7 +82,7 @@ local health = bar("Health", 35, Color3.fromRGB(154, 65, 67))
 local mana = bar("Mana", 58, Color3.fromRGB(58, 104, 165))
 local stamina = bar("Stamina", 81, Color3.fromRGB(75, 125, 83))
 local skills = text(panel, "Connecting to combat training…", 106, 42, 12)
-text(panel, "Studio sandbox · progress is not saved", 147, 18, 11, Color3.fromRGB(174, 190, 194))
+text(panel, "Training grounds · I / Y for equipment", 147, 18, 11, Color3.fromRGB(174, 190, 194))
 
 local help = create("Frame", screen, {
 	Name = "TrainingHelp", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -12),

@@ -149,7 +149,7 @@ function TrainingWorld.build()
 	instructions.TextColor3 = cream
 	instructions.TextSize = 20
 	instructions.TextWrapped = true
-	instructions.Text = "HEARTHGLEN TRAINING GROUNDS\nClose the armoury and face a selected dummy.\nAttack: click / R2 / touch Attack\nClass skill: 1 / X / touch Skill\nTraining only — no rewards or saving."
+	instructions.Text = "HEARTHGLEN TRAINING GROUNDS\nClose the armoury and face a selected dummy.\nAttack: click / R2 / touch Attack\nClass skill: 1 / X / touch Skill\nComplete training, then speak to Warden Mira."
 	instructions.Parent = surface
 	world.Parent = workspace
 	return world

@@ -15,5 +15,5 @@ local function compileDirectory(path)
 	end
 end
 compileDirectory("src")
-assert(count == 12, "Source discovery incomplete or source manifest needs updating")
+assert(count == 18, "Source discovery incomplete or source manifest needs updating")
 print(count .. " runtime modules/scripts compiled.")

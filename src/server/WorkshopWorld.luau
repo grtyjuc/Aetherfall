@@ -209,7 +209,7 @@ function WorkshopWorld.build(Catalog, EquipmentModels)
 		end
 	end
 	local sessionSign = part("SessionNotice", Vector3.new(10, 1.3, 0.25), Vector3.new(0, 2.7, 25), slate, Enum.Material.Wood)
-	sign(sessionSign, "Session-only test inventory\nEquipment workshop • not saved", 20)
+	sign(sessionSign, "HEARTHGLEN TRAINING\nCheck the HUD for your save status", 20)
 	for _, x in { -4.3, 4.3 } do
 		part("NoticePost", Vector3.new(0.35, 2.4, 0.35), Vector3.new(x, 1.2, 25), wood, Enum.Material.Wood)
 	end
