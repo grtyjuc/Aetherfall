@@ -43,11 +43,16 @@ def main():
     run(lune, "run", "tests/enemy-rewards.spec.luau")
     run(lune, "run", "tests/rest.spec.luau")
     run(lune, "run", "tests/audio.spec.luau")
+    run(lune, "run", "tests/grove.spec.luau")
+    run(lune, "run", "tests/grove-service.spec.luau")
+    run(lune, "run", "tests/grove-world.spec.luau")
+    run(lune, "run", "tests/boss.spec.luau")
+    run(lune, "run", "tests/boss-gear.spec.luau")
     (ROOT / "build").mkdir(exist_ok=True)
-    run(rojo, "build", "default.project.json", "--output", "build/Aetherfall-Step-4.rbxl")
+    run(rojo, "build", "default.project.json", "--output", "build/Aetherfall-Step-5.rbxl")
     run(lune, "run", "tests/place.spec.luau")
     (ROOT / "studio").mkdir(exist_ok=True)
-    shutil.copyfile(ROOT / "build/Aetherfall-Step-4.rbxl", ROOT / "studio/Aetherfall.rbxl")
+    shutil.copyfile(ROOT / "build/Aetherfall-Step-5.rbxl", ROOT / "studio/Aetherfall.rbxl")
     print("Packaged studio/Aetherfall.rbxl", flush=True)
 
 

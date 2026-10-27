@@ -180,7 +180,7 @@ task.spawn(function()
 		local progression = playerGui:FindFirstChild("AetherfallProgression")
 		local notice = progression and progression:FindFirstChild("RewardNotification")
 		local portraitNotice = lastViewport.X < 560 and notice and notice.Visible
-		tracker.Visible = not inventory and not dialogueRequested and not portraitNotice
+		tracker.Visible = not inventory and not dialogueRequested and not portraitNotice and player:GetAttribute("AetherfallBossActive") ~= true
 		dialogue.Visible = dialogueRequested and not inventory
 		applyLayout()
 		if (not state or state.canPlay == false) and retries < 10 and os.clock() >= retryAt then

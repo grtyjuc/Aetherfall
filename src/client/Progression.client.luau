@@ -189,7 +189,8 @@ request:FireServer("Sync")
 task.spawn(function()
 	local retries, retryAt = 0, os.clock() + 2
 	while running do
-		local visible = not inventoryOpen()
+		local criticalStatus = state and state.canPlay == false
+		local visible = not inventoryOpen() and (player:GetAttribute("AetherfallBossActive") ~= true or criticalStatus)
 		panel.Visible = visible
 		notification.Visible = visible and os.clock() < noticeUntil
 		applyLayout()

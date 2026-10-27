@@ -150,6 +150,13 @@ local function targetList()
 	if enemyTargets then
 		for _, enemy in enemyTargets:GetChildren() do table.insert(candidates, enemy) end
 	end
+	local bossWorld = workspace:FindFirstChild("AetherfallBoss")
+	local bossTargets = bossWorld and bossWorld:FindFirstChild("Targets")
+	if bossTargets and player:GetAttribute("AetherfallBossActive") == true then
+		for _, target in bossTargets:GetChildren() do
+			if target:GetAttribute("BossActive") == true then table.insert(candidates, target) end
+		end
+	end
 	local camera = workspace.CurrentCamera
 	for _, model in candidates do
 		local hitbox = model:FindFirstChild("Hitbox")

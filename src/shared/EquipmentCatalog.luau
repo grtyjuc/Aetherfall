@@ -146,6 +146,16 @@ add("moonlit_locket", "Moonlit Locket", "A silver locket containing a shard of r
 add("briarheart_talisman", "Briarheart Talisman", "A polished amber seed in a branching bronze cage, shaped by grove artisans.",
 	"Epic", "Accessory", "Accessory", 10, all, { MaxHealth = 20, Defence = 3, MagicResistance = 3 }, 110, bronze, green)
 
+-- Earned guardian equipment. These deterministic bonuses do not imply hidden passives.
+local briarwood = { 92, 76, 44 }
+local groveAmber = { 199, 178, 83 }
+add("briarwarden_shield", "Briarwarden's Shield", "Woven briarwood frames an amber-green guardian crest. Earned by overcoming Briarwarden.",
+	"Epic", "Shield", "OffHand", 5, sentinel, { Defence = 12, MaxHealth = 25, MagicResistance = 4 }, 95, briarwood, groveAmber)
+add("briarwarden_staff", "Briarwarden's Staff", "A living-wood staff cradles a polished amber-green stone. A two-handed reward from the grove guardian.",
+	"Epic", "Staff", "MainHand", 5, spellweaver, { MagicPower = 36, MagicResistance = 6 }, 110, briarwood, groveAmber, true)
+add("briarwarden_bow", "Briarwarden's Bow", "Amber-green bindings reinforce this recurved briarwood bow, earned by defeating the grove guardian.",
+	"Epic", "Bow", "MainHand", 5, ranger, { Attack = 34, CriticalChance = 0.04 }, 110, briarwood, groveAmber, true)
+
 local function deepFreeze(value: any)
 	if type(value) == "table" and not table.isfrozen(value) then
 		for _, child in pairs(value) do

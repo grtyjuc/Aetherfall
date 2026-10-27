@@ -1,11 +1,12 @@
 -- Pure quest transitions. NPC identity and defeat events must be validated by the server.
 local Progression = if script then require(script.Parent.ProgressionRules) else require("./ProgressionRules")
+local Grove = if script then require(script.Parent.GroveRules) else require("./GroveRules")
 local Rules = {}
 local allowedKinds = { MeadowSlime = true, WildBoar = true, Thornling = true }
-local questFields = { strangerStage = true, fieldsAccepted = true, fieldsKills = true }
+local questFields = { strangerStage = true, fieldsAccepted = true, fieldsKills = true, groveStage = true }
 
 local function defaults()
-	return { strangerStage = 0, fieldsAccepted = false, fieldsKills = 0 }
+	return { strangerStage = 0, fieldsAccepted = false, fieldsKills = 0, groveStage = 0 }
 end
 local function integer(value, minimum, maximum)
 	return type(value) == "number" and value == value and value % 1 == 0 and value >= minimum and value <= maximum
@@ -14,6 +15,7 @@ end
 function Rules.ensure(profile)
 	assert(type(profile) == "table", "Player profile required")
 	if profile.quests == nil then profile.quests = defaults() end
+	Grove.ensure(profile)
 	return profile.quests
 end
 
@@ -23,9 +25,12 @@ function Rules.validate(quests)
 		if not questFields[key] then return false, "Unknown quest state field." end
 	end
 	if not integer(quests.strangerStage, 0, 3) or type(quests.fieldsAccepted) ~= "boolean"
-		or not integer(quests.fieldsKills, 0, 4) then return false, "Invalid quest progress." end
+		or not integer(quests.fieldsKills, 0, 4) or not integer(quests.groveStage, 0, 4) then return false, "Invalid quest progress." end
 	if quests.fieldsAccepted and quests.strangerStage ~= 3 then return false, "Field quest requires the village introduction." end
 	if not quests.fieldsAccepted and quests.fieldsKills ~= 0 then return false, "An unaccepted quest cannot have defeat progress." end
+	if quests.groveStage > 0 and (quests.strangerStage ~= 3 or not quests.fieldsAccepted or quests.fieldsKills ~= 4) then
+		return false, "The grove requires completed field objectives."
+	end
 	return true, "Quest state valid."
 end
 
@@ -41,14 +46,15 @@ function Rules.validateProfile(profile)
 	if claims.quest_fields and (not quests.fieldsAccepted or quests.fieldsKills ~= 4) then
 		return false, "Field reward requires completed field objectives."
 	end
-	return true, "Quest profile valid."
+	return Grove.validateProfile(profile)
 end
 
 local function readState(profile)
 	local ok, reason = Progression.validate(profile)
 	if not ok then return nil, reason end
 	if profile.quests == nil then
-		if profile.claimedRewards.quest_stranger or profile.claimedRewards.quest_fields then
+		if profile.claimedRewards.quest_stranger or profile.claimedRewards.quest_fields
+			or profile.claimedRewards.boss_briarwarden or profile.claimedRewards.quest_grove then
 			return nil, "Quest reward claims have no matching quest state."
 		end
 		return defaults()
@@ -89,7 +95,7 @@ function Rules.interact(profile, npcId)
 		profile.quests = quests
 		return true, "Rowan: Creatures have overrun our eastern fields. Defeat four slimes, boars or thornlings, then return."
 	elseif profile.claimedRewards.quest_fields then
-		return false, "Rowan: The farmers are safer thanks to you. Hearthglen will remember your help."
+		return Grove.interact(profile)
 	elseif quests.fieldsKills < 4 then
 		return false, string.format("Rowan: The eastern fields still need you. You have defeated %d of four creatures.", quests.fieldsKills)
 	end
@@ -120,11 +126,14 @@ function Rules.snapshot(profile)
 	elseif quests.strangerStage == 1 then title, objective = "A Stranger in Hearthglen", "Meet Smith Tessa beside the south forge."
 	elseif quests.strangerStage == 2 then title, objective = "A Stranger in Hearthglen", "Return to Elder Rowan."
 	elseif not quests.fieldsAccepted then title, objective = "Trouble at the Fields", "Speak to Elder Rowan about the eastern fields."
-	elseif claims.quest_fields then title, objective = "Hearthglen Defender", "Both village quests complete. Rest at the well or explore."
+	elseif claims.quest_fields then
+		local grove = Grove.snapshot(profile)
+		title, objective = grove.title, grove.objective
 	elseif quests.fieldsKills >= 4 then title, objective = "Trouble at the Fields", "Return to Elder Rowan for your reward."
 	else title, objective = "Trouble at the Fields", string.format("Defeat creatures in the eastern fields: %d / 4.", quests.fieldsKills) end
 	return { strangerStage = quests.strangerStage, fieldsAccepted = quests.fieldsAccepted, fieldsKills = quests.fieldsKills,
 		strangerDone = claims.quest_stranger == true, fieldsDone = claims.quest_fields == true,
+		groveStage = quests.groveStage or 0, groveDone = claims.quest_grove == true, bossDefeated = claims.boss_briarwarden == true,
 		title = title, objective = objective }
 end
 

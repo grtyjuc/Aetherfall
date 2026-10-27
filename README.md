@@ -2,12 +2,12 @@
 
 A fantasy action RPG for Roblox, set in the world of Hearthglen and the shattered Hollow Star.
 
-**Current build: Hearthglen village and its first quests.** New characters begin at level 1 with class starter gear. Complete training, meet the villagers and fight creatures in the fields to earn XP, gold and equipment. Saving uses an isolated development DataStore when Studio API access is available; otherwise the HUD clearly shows session-only mode. This development build runs in Studio, not published servers.
+**Current build: Guardian of the Roots.** New characters begin at level 1 with class starter gear. Complete training and the village quests, inspect the ancient grove, and challenge Briarwarden for your first Aether Shard. Saving uses an isolated development DataStore when Studio API access is available; otherwise the HUD clearly shows session-only mode. This development build runs in Studio, not published servers.
 
 ## Included now
 
-- 14 weapons: swords, axe, mace, spear, greatsword, dagger, bows, crossbow, staves, and wands.
-- 4 off-hands: shield, magical focus, quiver, and lantern.
+- 16 weapons: swords, axe, mace, spear, greatsword, dagger, bows, crossbow, staves and wands, including grove rewards.
+- 5 off-hands: starter and Briarwarden shields, magical focus, quiver and lantern.
 - 12 armour pieces: militia plate, scout leather, and acolyte cloth; four slots per set.
 - 6 accessories, with two independently selectable slots.
 - Sentinel, Spellweaver, and Ranger loadouts; class/level requirements; rarity labels; additive stat tradeoffs.
@@ -19,17 +19,19 @@ A fantasy action RPG for Roblox, set in the world of Hearthglen and the shattere
 - Three stationary training dummies with shared health, multi-target spell testing, and automatic four-second recovery. Training goals award XP and gold once; repeated dummy defeats do not generate rewards. No PvP.
 - A connected village with five buildings, paths, gardens, fields, Elder Rowan, Smith Tessa and a rest well.
 - Four roaming creatures across Meadow Slime, Wild Boar and Thornling families, with pursuit, readable attack windups, damage, leash recovery and respawn.
-- Two quests: **A Stranger in Hearthglen** and **Trouble at the Fields**, with NPC dialogue, objectives and persistent once-only rewards.
+- Three quest chains: **A Stranger in Hearthglen**, **Trouble at the Fields** and **Guardian of the Roots**, with NPC dialogue, objectives and persistent once-only rewards.
+- A connected ancient grove arena and Briarwarden encounter: branch sweeps, marked root bursts, exposed-core windows, party health scaling, wipe recovery and a boss HUD.
+- Three level-5 Epic guardian rewards: Sentinel shield, Spellweaver staff and Ranger bow. First-defeat and Rowan turn-in rewards can be earned only once per character.
 - Repeatable creature XP/gold, shared defeat credit for recent nearby contributors, and a bounded generation guard against duplicate kill rewards.
 - Health/mana/stamina HUD, server-enforced costs/cooldowns/range/facing/line of sight, target selection, reduced-motion control, and original weapon motion/hit effects.
 - Level/XP/gold and objective HUD, Warden Mira training rewards, and level-based stat growth.
 - Validated, versioned saves with session leases, autosave, bounded retries, final-save attempts and visible save status.
 
-Equipped stats now affect damage, maximum health and walking speed. Equipment changes never heal or revive; class/equipment changes preserve resources and cooldowns. Shield Bash requires a shield, so two-handed Sentinel builds must switch back to use it. Quickstep moves at most 10 studs along a server-checked clear grounded path. Ranged damage resolves immediately after validation; projectile travel is cosmetic. Weapon-grip motion is procedural, not a full body animation set. Sell values are data only. Shield Bash also interrupts enemy attacks for one second. Village rest points restore health without reviving defeated characters. Selling, crafting, upgrades, random loot, bosses and the remaining story remain in the [roadmap](docs/ROADMAP.md). The three early enemy families currently share a simple melee state machine with different health, damage and speed.
+Equipped stats now affect damage, maximum health and walking speed. Equipment changes never heal or revive; class/equipment changes preserve resources and cooldowns. Shield Bash requires a shield, so two-handed Sentinel builds must switch back to use it. Quickstep moves at most 10 studs along a server-checked clear grounded path. Ranged damage resolves immediately after validation; projectile travel is cosmetic. Weapon-grip motion is procedural, not a full body animation set. Sell values are data only. Shield Bash interrupts ordinary enemy attacks for one second; the armored guardian resists that stun. Village rest points restore health without reviving defeated characters. Selling, crafting, upgrades, random loot, expanded abilities and the remaining story remain in the [roadmap](docs/ROADMAP.md). The three early enemy families currently share a simple melee state machine with different health, damage and speed.
 
 ## Open the ready-made Studio file
 
-Download [Aetherfall.rbxl](studio/Aetherfall.rbxl) using GitHub's **Download raw file** button. In Roblox Studio, choose **File → Open from File**, select it, then press **Play**. The workshop and training grounds generate at startup. No plugins are required. Saving needs the separate Studio setup below; gameplay still works without it. The [previous progression build](studio/Aetherfall-Step-3.rbxl) and [all-equipment sandbox](studio/Aetherfall-Step-2.rbxl) remain available separately. New saves migrate to schema version 2; the older progression build cannot read upgraded saves.
+Download [Aetherfall.rbxl](studio/Aetherfall.rbxl) using GitHub's **Download raw file** button. In Roblox Studio, choose **File → Open from File**, select it, then press **Play**. The workshop and training grounds generate at startup. No plugins are required. Saving needs the separate Studio setup below; gameplay still works without it. The [previous village build](studio/Aetherfall-Step-4.rbxl), [earlier progression build](studio/Aetherfall-Step-3.rbxl) and [original equipment sandbox](studio/Aetherfall-Step-2.rbxl) remain available separately. New saves migrate to schema version 3; older builds cannot read upgraded saves. The original sandbox contains the earlier 36-item catalogue.
 
 ## Build and open in Studio
 
@@ -46,10 +48,10 @@ The installer downloads pinned official GitHub releases into ignored `.tools/` a
 
 On Windows/macOS, install matching official releases from [Rojo](https://github.com/rojo-rbx/rojo/releases/tag/v7.7.1) and [Lune](https://github.com/lune-org/lune/releases/tag/v0.11.1) on `PATH` (or in `.tools/`), then run `python scripts/check.py` from the repository root. The setup script supports Linux x86_64.
 
-Open **`build/Aetherfall-Step-4.rbxl`** with Roblox Studio, then press **Play**. The world generates when the server starts. No Command Bar pasting, plugins, keys, or uploaded assets are required for session-only play. Build without running tests:
+Open **`build/Aetherfall-Step-5.rbxl`** with Roblox Studio, then press **Play**. The world generates when the server starts. No Command Bar pasting, plugins, keys, or uploaded assets are required for session-only play. Build without running tests:
 
 ```sh
-.tools/rojo build default.project.json --output build/Aetherfall-Step-4.rbxl
+.tools/rojo build default.project.json --output build/Aetherfall-Step-5.rbxl
 ```
 
 For live syncing, use the matching official Rojo Studio plugin and `.tools/rojo serve default.project.json`. Opening the built place directly needs no plugin. Save a copy of manual Studio edits before rebuilding/syncing; edit Luau in `src/` to retain changes.
@@ -68,7 +70,11 @@ For live syncing, use the matching official Rojo Studio plugin and `.tools/rojo 
 10. Follow the path around the right side of the workshop into Hearthglen. Talk to **Elder Rowan** in the plaza, meet **Smith Tessa**, then return to Rowan to complete the introduction.
 11. Speak to Rowan again to accept **Trouble at the Fields**. Follow the east road beyond the village fence, defeat four creatures, and return for the quest reward. Read the attack warning and step away before impact. Ranger Quickstep can avoid attacks; Sentinel Shield Bash interrupts them.
 12. Rest at the village well to restore health. Its server-enforced cooldown is ten seconds. Attacks against creatures require entering their field encounter area; they cannot damage villagers or players in the safe village.
-13. More advanced items remain in the catalogue for future loot. Use the previous sandbox to inspect all 36 items; they are no longer all granted to new progression characters.
+13. Speak to Rowan after claiming the field reward. Follow the northern trail beyond the fields and inspect the grove runestone.
+14. Reach **level 3** (level 5 recommended), then use the challenge stone to enter Briarwarden's arena. Additional eligible players can join through the same stone, up to twelve. Boss health scales by unique adventurers while preserving its remaining-health percentage.
+15. For branch sweeps, move behind the guardian or more than eleven studs away. For root bursts, leave the marked five-stud circle. After two attacks, the core opens for four seconds and loses its armor. The boss is stationary; attacks and warnings are server-timed.
+16. If everyone dies or leaves the arena for three seconds, the encounter resets. Victory grants recent nearby contributors their once-only class reward, 1300 XP and 180 gold. Return to Rowan for 400 XP, 120 gold and the completed first-shard story flag. Replays help other players but do not repeat the first-clear rewards.
+17. The current catalogue has 39 items. Advanced non-boss items remain reserved for future loot; new characters still receive only starter equipment.
 
 ## Test saving in Studio
 
@@ -79,7 +85,7 @@ For live syncing, use the matching official Rojo Studio plugin and `.tools/rojo 
 
 The DataStore is `Aetherfall_Development_v1`, keyed by Roblox user ID. Autosave runs every 60 seconds; sessions renew a 180-second ownership lease. Exit and shutdown attempt a final save with bounded retries. A failed load never enables writes; session-only fallback is never uploaded later. Rejoin after changing API settings. Fake players with nonpositive Studio test IDs always use session-only mode.
 
-A locked, corrupted, unknown-version or lost-lease character is paused rather than replaced. Wait for the previous session to release its lease or expire before rejoining. Failed saves remain pending and are retried; the UI does not report success until confirmed. Abrupt server termination can lose changes since the last confirmed save. Schema version 2 adds quest progress and preserves earlier version-one inventory, XP, gold and rewards during migration. Production saving is not enabled in this build, and live Roblox durability still needs the [save/load acceptance checks](docs/TESTING.md).
+A locked, corrupted, unknown-version or lost-lease character is paused rather than replaced. Wait for the previous session to release its lease or expire before rejoining. Failed saves remain pending and are retried; the UI does not report success until confirmed. Abrupt server termination can lose changes since the last confirmed save. Schema version 3 adds grove progress and preserves version-two village quests plus earlier inventory, XP, gold and rewards during migration. The recovered shard is represented by the saved grove-completion flag, not a separate usable item. Production saving is not enabled in this build, and live Roblox durability still needs the [save/load acceptance checks](docs/TESTING.md).
 
 ## Audio setup
 
@@ -121,6 +127,11 @@ Volumes are controlled through the local player attributes `AetherfallMusicVolum
 | `src/client/Quest.client.luau` | StarterPlayer.StarterPlayerScripts.EquipmentWorkshop | Quest tracker and dialogue |
 | `src/shared/AudioManifest.luau` | ReplicatedStorage.Shared | Optional audio event configuration |
 | `src/client/Audio.client.luau` | StarterPlayer.StarterPlayerScripts.EquipmentWorkshop | Sound groups and event/region hooks |
+| `src/shared/GroveRules.luau` | ReplicatedStorage.Shared | Rune, boss eligibility and once-only grove rewards |
+| `src/server/GroveWorld.luau` | ServerScriptService.Workshop | Grove environment and prompt locations |
+| `src/server/GroveService.luau` | ServerScriptService.Workshop | Validated rune inspection and boss reward delivery |
+| `src/server/BossService.luau` | ServerScriptService.Workshop | Enrollment, telegraphs, phases, scaling and recovery |
+| `src/client/Boss.client.luau` | StarterPlayer.StarterPlayerScripts.EquipmentWorkshop | Boss HP, warning text and encounter messages |
 
 Clients submit action names, owned instance IDs and slot/class choices. The server calculates changes and statistics; shared rules do not grant client authority. Catalog IDs are stable; item instance IDs such as `gear_000001` are unique within a player profile and retain their identity across saves.
 
@@ -128,6 +139,6 @@ Combat requests send only an action and registered target ID; the server derives
 
 ## Validation and limits
 
-`python3 scripts/check.py` checks all 28 runtime sources, 255 rule/service cases, all 36 procedural models, R6/R15 attachments, village/rest/audio construction and the generated place. It also refreshes the downloadable `studio/Aetherfall.rbxl`. Persistence and service tests use mocked DataStore, clocks, network and physics queries. They do not run the Roblox engine or prove live save reliability. See [test coverage and pending Studio checks](docs/TESTING.md).
+`python3 scripts/check.py` checks all 33 runtime sources, 319 rule/service cases, all 39 procedural equipment models, R6/R15 attachments, grove/arena construction and the generated place. It also refreshes the downloadable `studio/Aetherfall.rbxl`. Persistence and service tests use mocked DataStore, clocks, network and physics queries. They do not run the Roblox engine or prove live save reliability. See [test coverage and pending Studio checks](docs/TESTING.md).
 
-Automated checks pass. **Detailed village Studio playtests are still pending**, including enemy movement, quest completion, multiplayer, UI rendering, touch/controller navigation, streaming and collisions. See the [manual checklist](docs/TESTING.md).
+Automated checks pass. **Detailed grove Studio playtests are still pending**, including boss combat, party scaling, quest migration, UI rendering, touch/controller navigation, streaming and collisions. The encounter uses a procedural model and server-timed area attacks; a full boss animation set, minion phase and final balance pass are future work. See the [manual checklist](docs/TESTING.md).

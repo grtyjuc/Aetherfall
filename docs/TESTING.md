@@ -4,9 +4,9 @@
 
 Run `python3 scripts/check.py` from the repository root. Tool pins are in `scripts/setup_tools.py`.
 
-- Twenty-eight runtime sources compile. This checks syntax, not Roblox API types.
+- Thirty-three runtime sources compile. This checks syntax, not Roblox API types.
 - 24 equipment tests: all class starters; ownership/class/level/slot rejection; malformed inputs; exact stat changes/removal; repeated equip; two-handed conflicts; bow/quiver exceptions; accessory movement and uniqueness; independent snapshots; inventory preservation during mixed actions.
-- All 36 models construct in Lune's Roblox data model, covering 19 silhouettes. Geometry must be finite and positive, with a Handle PrimaryPart, anchored/noninteractive parts, at most 30 parts/model, and no scripts/external assets. Invalid definitions fail explicitly.
+- All 39 equipment models construct in Lune's Roblox data model, covering 19 silhouettes. Geometry must be finite and positive, with a Handle PrimaryPart, anchored/noninteractive parts, at most 30 parts/model, and no scripts/external assets. Invalid definitions fail explicitly.
 - Workshop tests verify a part budget below 400, six displays, finite transforms, spawn/prompt settings, preserved existing objects, idempotent construction and safe reserved-name conflict handling.
 - Rojo builds the `.rbxl`. A separate test deserializes it and checks actual script classes, sources, service locations and streaming enabled.
 - 31 pure combat-rule tests cover all class basics/skills, knife versus bow, exact costs, cooldown boundaries/spam, combo progression/reset, dead/unequipped rejection, shield requirements, target/range/facing/line-of-sight flags, regeneration, malformed times and deterministic damage/critical rolls. Geometry flags in this suite are supplied by the test, not live physics.
@@ -15,7 +15,7 @@ Run `python3 scripts/check.py` from the repository root. Tool pins are in `scrip
 - Training-ground construction verifies three unique server-readable targets, finite/queryable hitboxes, health labels, repeatability and nearby targets suitable for Flame Burst. The workshop/training/mentor geometry totals 284 static parts; the village adds 302. Enemies, character attachments and transient effects are checked separately.
 
 - 21 progression-rule tests cover XP thresholds, multiple levels/cap, stat growth, atomic once-only rewards, currency/inventory limits and class starter grants.
-- 27 schema tests validate round trips, independent copies, limits, corrupt/future records, identity collisions, cycles, version-zero migration and version-one upgrade to quest schema version 2.
+- 32 schema tests validate round trips, independent copies, limits, corrupt/future records, identity collisions, cycles, version-zero migration and version-one/two upgrades to grove schema version 3 without changing prior progress.
 - 27 session-store tests exercise session leases, expiry/takeover, retried callbacks, transient errors, lost responses after commit, stable snapshots, competing writes and failed final saves.
 - 20 PlayerDataService tests cover safe loading/fallback, truthful status, autosave, newer mutations during yielding saves, departure/shutdown cleanup, retained final-save failures, retry spacing and negative Studio IDs.
 - 14 training-reward tests cover milestone uniqueness, all class rewards, persisted claims, partial session progress, proximity/alive checks, invalid client requests, loading/lost sessions and the original mentor model.
@@ -26,6 +26,12 @@ Run `python3 scripts/check.py` from the repository root. Tool pins are in `scrip
 - 16 enemy-reward tests verify server amounts, per-spawn generation credit, stale replay rejection, player isolation, currency caps, stat growth and bounded memory without filling permanent reward history.
 - Village construction checks verify 302 finite anchored parts, NPC/rest prompt metadata, four spawn markers across three families, preservation and repeatability.
 - Rest-point checks cover proximity, alive state, save ownership, cooldown and cleanup. Audio manifest checks cover six silent events, group/volume/rolloff metadata and accepted sound ID formats; no playback is simulated.
+
+- 18 grove-rule tests cover quest order, rune discovery, level/quest eligibility, once-only class gear and Rowan rewards, helpers, and atomic failure cases.
+- 11 GroveService tests exercise rune proximity/alive/save-owner checks, replay protection, class rewards, isolation and cleanup with actual rules and mocked prompts.
+- 20 BossService tests exercise server enrollment, private gate feedback, unique-player health scaling, late joins, cone/root warnings, impact checks, exposed armor, victory attribution, wipe/reset, distant HUD closure, first-entry protection and cleanup. Network, timing and raycasts are mocked.
+- 10 boss-gear tests verify the new level-5 items, class/ownership requirements, exact statistics and hand-slot compatibility.
+- Grove construction checks verify 107 static parts, arena dimensions/ground, six trees, both prompts, a clear path, preservation and repeatability.
 
 ## Pending Studio playtests
 
@@ -65,7 +71,7 @@ Open the built place and use **Play**, then **Server & Clients** with two client
 | Reduced motion | Stops grip swings and moving/burst effects; damage text and all gameplay remain available |
 | Character rigs | R6/R15 and scaled avatars hold gear at the hand/forearm/back without anchoring, flinging or collisions |
 
-The Studio playtests above have **not been run**. Pure and mocked tests do not replace live playtesting. Full body animations, dodge invulnerability and bosses are not implemented yet. The new village, enemies and quests require the additional Studio checks below. Audio hooks have no assets configured. Live DataStore persistence has not been exercised here.
+The Studio playtests above have **not been run**. Pure and mocked tests do not replace live playtesting. Full body animations and universal dodge invulnerability are not implemented yet. The grove boss and its new quest require the additional Studio checks below. Audio hooks have no assets configured. Live DataStore persistence has not been exercised here.
 
 ## Pending save/load acceptance
 
@@ -108,3 +114,26 @@ Use a private published test experience with Studio API access enabled. These te
 | Silent audio | Empty IDs issue no audio requests or errors; configured permitted IDs play through correct groups with volume controls |
 
 Complete these new checks in Studio; pure rules, data-model construction and mocked physics do not establish live pathing, playback or multiplayer behavior.
+
+## Pending grove acceptance
+
+| Check | Expected result |
+| --- | --- |
+| Existing save | A version-two character retains all village quest progress, gear, XP and gold; groveStage starts at zero |
+| Quest route | Rowan offers grove discovery after the field reward; inspecting the rune unlocks the challenge objective |
+| Gate feedback | Unready or sub-level-three players receive an actionable message without being enrolled or teleported |
+| Arena access | Entering the challenge requires proximity, life and writable player state; spectators cannot damage the boss |
+| Sweep | The warning covers the damaging forward half-disc; moving behind or beyond eleven studs avoids impact |
+| Roots | The five-stud warning circle stays at the cast location; moving away avoids the delayed hit |
+| Core | Every two attacks, four seconds of exposure removes armor; no boss attack fires during that window |
+| Entry safety | First entry has brief protection from an imminent hit; using the gate again cannot renew it |
+| Party scaling | New unique participants adjust max HP while preserving health ratio; reconnects and gate reuse do not inflate scaling |
+| Wipe | Three seconds with no living in-arena participants resets HP and enrollment; distant respawned players receive inactive HUD state |
+| Victory | Recent nearby contributors receive first-clear class gear,1300XP/180gold once; stale, unregistered or paused players receive none |
+| Turn-in | Rowan awards400XP/120gold once and persists the completed shard flag |
+| Replay | Completed players can help others, without duplicating boss or quest rewards |
+| Lost ownership | Inventory/combat/rewards pause and the save-error status remains visible |
+| Layout/streaming | Boss HP/warnings coexist with character health and controls; dormant or streamed-out boss models cause no errors |
+| Reset/cleanup | Victory recovery returns the guardian to dormant state; no stale participants, targets, connections or danger markers remain |
+
+These are live Studio acceptance checks, not results from the automated mocks. The first boss encounter is implemented; the complete levels1–10 region and final balance are still in progress.

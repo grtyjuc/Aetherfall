@@ -161,6 +161,8 @@ test("field turn-in rewards once and leaves both quests completed", function()
 	f:talk(player, "Rowan")
 	local profile = f.profiles[player]
 	assert(profile.gold == 80 and f:last().fieldsDone and f:last().strangerDone)
+	f:talk(player, "Rowan") -- The next interaction accepts the grove; earlier rewards stay claimed.
+	assert(profile.quests.groveStage == 1 and profile.gold == 80)
 	local nextId, gold, xp, changed = profile.nextId, profile.gold, profile.xp, f.changed
 	for _ = 1, 5 do f.service:recordDefeat(player, "WildBoar"); f:talk(player, "Rowan") end
 	assert(profile.gold == gold and profile.xp == xp and profile.nextId == nextId and f.changed == changed)

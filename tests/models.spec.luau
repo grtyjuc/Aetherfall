@@ -54,7 +54,7 @@ for _, id in Catalog.Order do
 	print("PASS " .. id .. " (" .. partCount .. " parts)")
 end
 
-assert(passed == 36, "Expected all 36 catalog items to be constructed")
+assert(passed == 39, "Expected all 39 catalog items to be constructed")
 local expectedShapes = {
 	"Sword", "Axe", "Mace", "Spear", "Greatsword", "Dagger", "Bow", "Crossbow", "Staff", "Wand",
 	"Shield", "Focus", "Quiver", "Lantern", "Helmet", "Chest", "Gloves", "Boots", "Accessory",
@@ -68,4 +68,4 @@ invalid.model = table.clone(invalid.model)
 invalid.model.shape = "Unknown"
 assert(not pcall(Models.create, invalid), "Unsupported silhouette must fail explicitly")
 assert(not pcall(Models.create, nil), "Missing definition must fail explicitly")
-print("36 equipment models constructed; 19 silhouettes covered; invalid definitions rejected.")
+print("39 equipment models constructed; 19 silhouettes covered; invalid definitions rejected.")

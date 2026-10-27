@@ -5,7 +5,7 @@ local Progression = if Shared then require(Shared.ProgressionRules) else require
 
 local Quest = if Shared then require(Shared.QuestRules) else require("../shared/QuestRules")
 
-local Schema = { version = 2 }
+local Schema = { version = 3 }
 local MAX_ITEMS = 200
 local MAX_CLAIMS = 128
 local MAX_SEQUENCE = 1e9
@@ -125,12 +125,19 @@ function Schema.decode(raw)
 	if not boundedTree(raw) or not onlyFields(raw, { version = true, data = true }) then
 		return nil, "Save envelope contains unsupported or oversized data."
 	end
-	if raw.version ~= 0 and raw.version ~= 1 and raw.version ~= Schema.version then
+	if raw.version ~= 0 and raw.version ~= 1 and raw.version ~= 2 and raw.version ~= Schema.version then
 		return nil, "Unsupported save version."
 	end
 	local ok, reason = profileShape(raw.data, raw.version)
 	if not ok then return nil, reason end
 	local profile = copy(raw.data)
+	if raw.version == 2 then
+		local oldQuests = profile.quests
+		if type(oldQuests) ~= "table" or oldQuests.groveStage ~= nil then return nil, "Invalid version-two quest fields." end
+		for key in oldQuests do
+			if key ~= "strangerStage" and key ~= "fieldsAccepted" and key ~= "fieldsKills" then return nil, "Unknown version-two quest field." end
+		end
+	end
 	if raw.version == 0 then
 		-- Explicit equipment-only migration; no old production saves are assumed.
 		profile.xp, profile.gold, profile.claimedRewards = 0, 0, {}

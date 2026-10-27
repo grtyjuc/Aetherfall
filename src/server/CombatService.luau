@@ -244,7 +244,7 @@ function CombatService:_damageTarget(player, action, result, target, origin, now
 		target:GetAttribute("Defence"), self.random:NextNumber())
 	local remaining = math.max(0, target:GetAttribute("Health") - damage)
 	target:SetAttribute("Health", remaining)
-	if target:GetAttribute("Enemy") == true and result.name == "Shield Bash" and remaining > 0 then
+	if target:GetAttribute("Enemy") == true and target:GetAttribute("Boss") ~= true and result.name == "Shield Bash" and remaining > 0 then
 		target:SetAttribute("StunnedUntil", now + 1)
 	end
 	if remaining == 0 and target:GetAttribute("Enemy") ~= true then target:SetAttribute("DownUntil", now + 4) end
