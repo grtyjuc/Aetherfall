@@ -282,5 +282,25 @@ test("negative, nonfinite or unsupported damage inputs cannot amplify damage", f
 	assert(not pcall(Rules.damage, { Attack = 1, CriticalChance = -1 }, result, 0, 0.5))
 end)
 
+test("defensive stances can suppress stamina regeneration without suppressing mana", function()
+	local state = Rules.newState(0)
+	state.stamina, state.mana = 10, 20
+	assert(Rules.refresh(state, 2, 0))
+	near(state.stamina, 10); near(state.mana, 36)
+	assert(Rules.refresh(state, 4, 0.5))
+	near(state.stamina, 25); near(state.mana, 52)
+	assert(Rules.refresh(state, 5))
+	near(state.stamina, 40); near(state.mana, 60)
+end)
+
+test("malformed regeneration overrides reject atomically", function()
+	for _, scale in { -1, 2, "0", math.huge, 0 / 0 } do
+		local state = Rules.newState(0)
+		state.stamina, state.mana = 10, 20
+		assert(not Rules.refresh(state, 2, scale))
+		assert(state.stamina == 10 and state.mana == 20 and state.lastTick == 0)
+	end
+end)
+
 print("Combat rules: " .. passed .. " passed, " .. failed .. " failed")
 assert(failed == 0, "Combat rule checks failed")

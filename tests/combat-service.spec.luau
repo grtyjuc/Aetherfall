@@ -428,4 +428,43 @@ test("Shield Bash marks a surviving registered enemy stunned", function()
 	f.service:destroy()
 end)
 
+test("stamina suppression applies to ticks, trusted getters and remote synchronization", function()
+	local f = fixture(); local player = f:addPlayer(1)
+	local scale = 0
+	f.service.options.staminaRegenScale = function() return scale end
+	local resources = f.service.states[player].combat
+	resources.stamina, resources.mana = 20, 20
+	f:advance(1)
+	assert(resources.stamina == 20 and resources.mana == 28)
+	f.now += 1
+	assert(f.service:getResources(player) == resources)
+	assert(resources.stamina == 20 and resources.mana == 36)
+	f.now += 1
+	f:request(player, "Sync")
+	assert(resources.stamina == 20 and resources.mana == 44)
+	scale = 1
+	f:advance(1)
+	assert(resources.stamina == 35 and resources.mana == 52)
+	f.service:destroy()
+end)
+
+test("attack stance gate runs before a fresh authoritative action timestamp", function()
+	local f = fixture(); local player = f:addPlayer(1)
+	local allowed = false
+	f.service.options.actionAllowed = function(actor)
+		assert(actor == player)
+		f.now += 0.01
+		f.service:getResources(actor) -- Simulates defence charging its preceding interval.
+		return allowed, "Release your shield first."
+	end
+	f:request(player, "Basic", "dummy_1")
+	assert(f.targets[1]:GetAttribute("Health") == 300)
+	assert(f.service.states[player].combat.stamina == 100)
+	allowed = true
+	f:request(player, "Basic", "dummy_1")
+	assert(f.targets[1]:GetAttribute("Health") < 300)
+	assert(f.service.states[player].combat.stamina == 94)
+	f.service:destroy()
+end)
+
 print(passed .. " CombatService handler tests passed with mocked network, clocks and physics.")

@@ -4,13 +4,13 @@
 
 Run `python3 scripts/check.py` from the repository root. Tool pins are in `scripts/setup_tools.py`.
 
-- Thirty-three runtime sources compile. This checks syntax, not Roblox API types.
+- Thirty-six runtime sources compile. This checks syntax, not Roblox API types.
 - 24 equipment tests: all class starters; ownership/class/level/slot rejection; malformed inputs; exact stat changes/removal; repeated equip; two-handed conflicts; bow/quiver exceptions; accessory movement and uniqueness; independent snapshots; inventory preservation during mixed actions.
 - All 39 equipment models construct in Lune's Roblox data model, covering 19 silhouettes. Geometry must be finite and positive, with a Handle PrimaryPart, anchored/noninteractive parts, at most 30 parts/model, and no scripts/external assets. Invalid definitions fail explicitly.
 - Workshop tests verify a part budget below 400, six displays, finite transforms, spawn/prompt settings, preserved existing objects, idempotent construction and safe reserved-name conflict handling.
 - Rojo builds the `.rbxl`. A separate test deserializes it and checks actual script classes, sources, service locations and streaming enabled.
-- 31 pure combat-rule tests cover all class basics/skills, knife versus bow, exact costs, cooldown boundaries/spam, combo progression/reset, dead/unequipped rejection, shield requirements, target/range/facing/line-of-sight flags, regeneration, malformed times and deterministic damage/critical rolls. Geometry flags in this suite are supplied by the test, not live physics.
-- 21 tests exercise the actual CombatService request handlers with mocked clocks, network signals and physics queries. They cover ignoring injected damage values, registered targets, range/facing/LOS rejection, cooldown and request spam, class/equipment state preservation, no healing/revival from gear, dagger melee, per-player resource isolation/shared target health, area damage, target recovery, clear/blocked/ungrounded dash behavior, malformed requests and lifecycle cleanup. Raycast/Blockcast outcomes are mocked; this does not prove live wall collision behavior.
+- 33 pure combat-rule tests cover all class basics/skills, knife versus bow, exact costs, cooldown boundaries/spam, combo progression/reset, dead/unequipped rejection, shield requirements, target/range/facing/line-of-sight flags, regeneration, malformed times and deterministic damage/critical rolls. Geometry flags in this suite are supplied by the test, not live physics.
+- 23 tests exercise the actual CombatService request handlers with mocked clocks, network signals and physics queries. They cover ignoring injected damage values, registered targets, range/facing/LOS rejection, cooldown and request spam, class/equipment state preservation, no healing/revival from gear, dagger melee, per-player resource isolation/shared target health, area damage, target recovery, clear/blocked/ungrounded dash behavior, malformed requests and lifecycle cleanup. Raycast/Blockcast outcomes are mocked; this does not prove live wall collision behavior.
 - Attachment construction verifies R6/R15, every weapon, quivers, unanchored massless welded parts, repeated replacement, cleanup and scaled R6 hand offsets. These checks do not simulate character physics.
 - Training-ground construction verifies three unique server-readable targets, finite/queryable hitboxes, health labels, repeatability and nearby targets suitable for Flame Burst. The workshop/training/mentor geometry totals 284 static parts; the village adds 302. Enemies, character attachments and transient effects are checked separately.
 
@@ -22,16 +22,20 @@ Run `python3 scripts/check.py` from the repository root. Tool pins are in `scrip
 
 - 22 quest-rule tests cover both quest flows, NPC visit order, accepted defeat counters, bounded state, once-only rewards and claim/state consistency.
 - 15 QuestService tests exercise prompt distance/alive/save-owner checks, dialogue, Sync-only requests, rate limiting, persistence and player isolation.
-- 17 EnemyService tests exercise model construction, state transitions, telegraphs, impact checks, sanctuary/leash limits, ranged aggro, stun interruption, contributor credit, query flags and generation-based respawn with mocked physics.
+- 19 EnemyService tests exercise model construction, state transitions, telegraphs, impact checks, sanctuary/leash limits, ranged aggro, stun interruption, contributor credit, query flags and generation-based respawn with mocked physics.
 - 16 enemy-reward tests verify server amounts, per-spawn generation credit, stale replay rejection, player isolation, currency caps, stat growth and bounded memory without filling permanent reward history.
 - Village construction checks verify 302 finite anchored parts, NPC/rest prompt metadata, four spawn markers across three families, preservation and repeatability.
 - Rest-point checks cover proximity, alive state, save ownership, cooldown and cleanup. Audio manifest checks cover six silent events, group/volume/rolloff metadata and accepted sound ID formats; no playback is simulated.
 
 - 18 grove-rule tests cover quest order, rune discovery, level/quest eligibility, once-only class gear and Rowan rewards, helpers, and atomic failure cases.
 - 11 GroveService tests exercise rune proximity/alive/save-owner checks, replay protection, class rewards, isolation and cleanup with actual rules and mocked prompts.
-- 20 BossService tests exercise server enrollment, private gate feedback, unique-player health scaling, late joins, cone/root warnings, impact checks, exposed armor, victory attribution, wipe/reset, distant HUD closure, first-entry protection and cleanup. Network, timing and raycasts are mocked.
+- 23 BossService tests exercise server enrollment, private gate feedback, unique-player health scaling, late joins, cone/root warnings, impact checks, exposed armor, victory attribution, wipe/reset, distant HUD closure, first-entry protection and cleanup. Network, timing and raycasts are mocked.
 - 10 boss-gear tests verify the new level-5 items, class/ownership requirements, exact statistics and hand-slot compatibility.
 - Grove construction checks verify 107 static parts, arena dimensions/ground, six trees, both prompts, a clear path, preservation and repeatability.
+
+- 36 pure defence-rule tests cover shared stamina, dodge windows/cooldowns, cone checks, guard costs/breaks, sprint drain, release cleanup and atomic rejection. Sub-tick stance changes cannot erase their preceding drain.
+- 21 DefenceService tests exercise real handlers with mocked movement/physics, including server-observed horizontal assembly velocity (not the nonreplicated Humanoid.MoveDirection property), movement collision bounds, shield ownership, focus-safe releases, gear-based speed, exact incoming damage and lifecycle isolation.
+- Combat integration regressions cover stamina suppression on every resource refresh path and timestamps advanced by defence callbacks. Enemy and boss tests verify validated damage reaches the defence hook once, with the correct attack source and no double application.
 
 ## Pending Studio playtests
 
@@ -71,7 +75,7 @@ Open the built place and use **Play**, then **Server & Clients** with two client
 | Reduced motion | Stops grip swings and moving/burst effects; damage text and all gameplay remain available |
 | Character rigs | R6/R15 and scaled avatars hold gear at the hand/forearm/back without anchoring, flinging or collisions |
 
-The Studio playtests above have **not been run**. Pure and mocked tests do not replace live playtesting. Full body animations and universal dodge invulnerability are not implemented yet. The grove boss and its new quest require the additional Studio checks below. Audio hooks have no assets configured. Live DataStore persistence has not been exercised here.
+The Studio playtests above have **not been run**. Pure and mocked tests do not replace live playtesting. Full body dodge/block animations are not implemented yet. Universal directional dodging now includes a short server-owned NPC attack invulnerability window. The grove boss and its new quest require the additional Studio checks below. Audio hooks have no assets configured. Live DataStore persistence has not been exercised here.
 
 ## Pending save/load acceptance
 
@@ -137,3 +141,23 @@ Complete these new checks in Studio; pure rules, data-model construction and moc
 | Reset/cleanup | Victory recovery returns the guardian to dormant state; no stale participants, targets, connections or danger markers remain |
 
 These are live Studio acceptance checks, not results from the automated mocks. The first boss encounter is implemented; the complete levels1–10 region and final balance are still in progress.
+
+## Pending defensive-combat acceptance
+
+| Check | Expected result |
+| --- | --- |
+| Q/B/touch dodge | Every class steps in movement/facing direction, no more than eight studs; cost18, cooldown1.2s, NPC attack protection0.25s |
+| Collision | Walls, fences, missing ground and slopes do not permit clipping or unsafe movement; blocked paths do not spend stamina |
+| Sprint replication | Shift+movement/L3/touch works with the real server observing assembly motion; stationary or vertical motion alone cannot activate sprint |
+| Shared resources | Sprint drains22/s, guard4/s plus10per hit, stamina regen pauses in either stance, and attacks/dodge use the same balance |
+| Block facing | Shield reduces frontal damage to30% of its mitigated value; rear/directionless sources hit normally |
+| Guard break | Insufficient stamina drops guard; exhaustion recovery prevents immediate guard spam |
+| Attacks and skills | Guard/dodge block attacks; attacking cancels sprint; Ranger Quickstep still uses its independent skill cooldown |
+| Held controls | Menus, dialogue, typing, focus loss, respawn and script cleanup cannot leave guard/sprint held |
+| Input timing | Shift before WASD starts once server movement arrives; natural stops can resume, attacks do not auto-resume held sprint |
+| Gear/classes | Swapping shields/classes updates speed and eligibility without healing or resetting cooldown/resources |
+| Incoming hits | Ordinary enemies, sweeps and marked roots use the same defence path exactly once; ForceField health reporting remains honest |
+| Boss layout | Player health and boss warnings stay readable; short/narrow layouts retain working touch actions without overlapping extra feedback |
+| Multiplayer | One player's stance/cost/invulnerability never affects another; server rejected packets cannot bypass cooldown or damage rules |
+
+Run these in real Studio before treating movement feel, replication or device layout as verified. Automated tests use injected network, clock and physics responses.

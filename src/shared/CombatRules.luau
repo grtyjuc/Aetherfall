@@ -32,13 +32,17 @@ function Rules.newState(now)
 	}
 end
 
-function Rules.refresh(state, now)
+function Rules.refresh(state, now, staminaScale)
+	staminaScale = if staminaScale == nil then 1 else staminaScale
 	if not validState(state) or not validTime(now) or now < state.lastTick then
 		return false, "Invalid or non-monotonic combat time/state."
 	end
+	if not finite(staminaScale) or staminaScale < 0 or staminaScale > 1 then
+		return false, "Invalid stamina regeneration scale."
+	end
 	local elapsed = now - state.lastTick
 	state.mana = math.min(Config.maxMana, state.mana + elapsed * Config.regenMana)
-	state.stamina = math.min(Config.maxStamina, state.stamina + elapsed * Config.regenStamina)
+	state.stamina = math.min(Config.maxStamina, state.stamina + elapsed * Config.regenStamina * staminaScale)
 	state.lastTick = now
 	return true, "Combat resources refreshed."
 end

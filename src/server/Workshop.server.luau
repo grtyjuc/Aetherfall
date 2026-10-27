@@ -27,6 +27,7 @@ local GroveWorld = require(script.Parent.GroveWorld)
 local GroveRules = require(Shared.GroveRules)
 local GroveService = require(script.Parent.GroveService)
 local BossService = require(script.Parent.BossService)
+local DefenceService = require(script.Parent.DefenceService)
 local remotes = Instance.new("Folder")
 remotes.Name = "WorkshopRemotes"
 local request = Instance.new("RemoteFunction")
@@ -41,7 +42,7 @@ local world = World.build(Catalog, Models)
 local trainingWorld = TrainingWorld.build()
 local village = VillageWorld.build()
 local grove = GroveWorld.build()
-local data, rewards, combat, quests, enemies, enemyRewards, rest, groveService, boss
+local data, rewards, combat, quests, enemies, enemyRewards, rest, groveService, boss, defence
 
 data = PlayerDataService.new(profiles, { onStatus = function(player)
 	if rewards then rewards:changed(player) end
@@ -50,6 +51,7 @@ end })
 local function changed(player, classChanged)
 	data:markDirty(player)
 	combat:equipmentChanged(player, classChanged == true)
+	if defence then defence:equipmentChanged(player) end
 	if player.Character then Visuals.apply(player.Character, profiles[player]) end
 	rewards:changed(player)
 	if quests then quests:changed(player) end
@@ -63,6 +65,11 @@ rewards = TrainingRewards.new(profiles, remotes, {
 })
 combat = CombatService.new(profiles, remotes, trainingWorld, {
 	canAct = canAct,
+	staminaRegenScale = function(player) return if defence then defence:staminaRegenScale(player) else 1 end,
+	actionAllowed = function(player)
+		if defence then return defence:allowsAttack(player) end
+		return true
+	end,
 	canTarget = function(player, target)
 		if target:GetAttribute("Boss") == true then
 			if not boss then return false, "The grove guardian is not ready." end
@@ -83,6 +90,10 @@ combat = CombatService.new(profiles, remotes, trainingWorld, {
 	end,
 	onAction = function(player, action, result) rewards:recordAction(player, action, result) end,
 })
+defence = DefenceService.new(profiles, remotes, {
+	canAct = canAct,
+	getResources = function(player) return combat:getResources(player) end,
+})
 quests = QuestService.new(profiles, remotes, village, {
 	canAct = canAct, onChanged = function(player) changed(player, false) end,
 })
@@ -96,6 +107,7 @@ enemyRewards = EnemyRewards.new(profiles, {
 })
 enemies = EnemyService.new(profiles, combat, village, {
 	canAct = canAct,
+	applyDamage = function(player, damage, source) return defence:applyDamage(player, damage, source) end,
 	onDefeat = function(player, kind, killId) enemyRewards:recordDefeat(player, kind, killId) end,
 })
 rest = RestService.new(profiles, village, { canAct = canAct, onRest = function(player)
@@ -111,6 +123,7 @@ groveService = GroveService.new(profiles, remotes, grove, {
 boss = BossService.new(profiles, combat, grove, {
 	remotes = remotes,
 	canAct = canAct,
+	applyDamage = function(player, damage, source) return defence:applyDamage(player, damage, source) end,
 	canChallenge = function(player) return GroveRules.canChallenge(profiles[player]) end,
 	onDefeat = function(player) groveService:recordBossDefeat(player) end,
 })
@@ -140,6 +153,7 @@ local function addPlayer(player)
 		if not profile then return end
 		if shuttingDown or player.Parent ~= Players then data:removePlayer(player); return end
 		combat:addPlayer(player)
+		defence:addPlayer(player)
 		if player.Character then attachCharacter(player, player.Character) end
 		rewards:changed(player)
 		quests:changed(player)
@@ -147,6 +161,7 @@ local function addPlayer(player)
 end
 local addedConnection = Players.PlayerAdded:Connect(addPlayer)
 local removingConnection = Players.PlayerRemoving:Connect(function(player)
+	defence:removePlayer(player)
 	combat:removePlayer(player)
 	rewards:removePlayer(player)
 	quests:removePlayer(player)
@@ -211,6 +226,7 @@ local function shutdown()
 	enemyRewards:destroy()
 	quests:destroy()
 	rest:destroy()
+	defence:destroy()
 	combat:destroy()
 	rewards:destroy()
 	for _, connection in visualConnections do connection:Disconnect() end

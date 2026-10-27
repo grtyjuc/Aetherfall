@@ -247,7 +247,11 @@ function EnemyService:_impact(entry, now)
 		or not self:_lineOfSight(entry, character, position(entry.model.PrimaryPart), position(root)) then return end
 	local defence = Progression.stats(self.profiles[entry.target]).Defence
 	local damage = math.max(1, entry.definition.damage * (100 / (100 + math.max(0, defence))))
-	humanoid:TakeDamage(damage)
+	if self.options.applyDamage then
+		self.options.applyDamage(entry.target, damage, position(entry.model.PrimaryPart))
+	else
+		humanoid:TakeDamage(damage)
+	end
 end
 
 function EnemyService:onDamaged(player, target, damage, wasDefeated)

@@ -146,6 +146,49 @@ test("moving out of range during windup avoids the impact", function()
 	f.service:destroy()
 end)
 
+test("defence hook receives one server-mitigated hit and the enemy source position", function()
+	for index = 1, 3 do
+		local f = fixture(); local player = f:addPlayer(nil, index); local entry = f:entry(index)
+		local hits = {}
+		f.profiles[player].level = 3
+		f.service.options.applyDamage = function(recipient, damage, source)
+			table.insert(hits, { recipient = recipient, damage = damage, source = source })
+		end
+		f:step(0.2)
+		assert(entry.state == "Windup" and #hits == 0)
+		f:step(0.81)
+		local defence = Progression.stats(f.profiles[player]).Defence
+		local expected = math.max(1, entry.definition.damage * 100 / (100 + defence))
+		assert(#hits == 1 and hits[1].recipient == player)
+		assert(math.abs(hits[1].damage - expected) < 0.000001)
+		assert(hits[1].source == entry.model.PrimaryPart.CFrame.Position)
+		assert(player.humanoid.taken == 0, "The hook owns damage application; AI must not double-apply")
+		f:step(0.4)
+		assert(#hits == 1)
+		f.service:destroy()
+	end
+end)
+
+test("defence hook is never called for an impact invalidated before resolution", function()
+	for _, mode in { "blocked", "protected", "range", "leash", "safe", "paused", "dead" } do
+		local f = fixture(); local player = f:addPlayer(); local entry = f:entry()
+		local hits = 0
+		f.service.options.applyDamage = function() hits += 1 end
+		f:step(0.2)
+		assert(entry.state == "Windup")
+		if mode == "blocked" then f.blocked = true
+		elseif mode == "protected" then f.protectedUntil = f.now + 3
+		elseif mode == "range" then player.root.CFrame = CFrame.new(entry.home + Vector3.new(12, 0, 0))
+		elseif mode == "leash" then player.root.CFrame = CFrame.new(entry.home + Vector3.new(40, 0, 0))
+		elseif mode == "safe" then player.root.CFrame = CFrame.new(47, 2, -74)
+		elseif mode == "paused" then player.paused = true
+		else player.humanoid.Health = 0 end
+		f:step(0.81)
+		assert(hits == 0 and player.humanoid.taken == 0)
+		f.service:destroy()
+	end
+end)
+
 test("blocked impacts and spawn protection prevent damage", function()
 	for _, mode in { "blocked", "protected" } do
 		local f = fixture(); local player = f:addPlayer()

@@ -2,7 +2,7 @@
 
 A fantasy action RPG for Roblox, set in the world of Hearthglen and the shattered Hollow Star.
 
-**Current build: Guardian of the Roots.** New characters begin at level 1 with class starter gear. Complete training and the village quests, inspect the ancient grove, and challenge Briarwarden for your first Aether Shard. Saving uses an isolated development DataStore when Studio API access is available; otherwise the HUD clearly shows session-only mode. This development build runs in Studio, not published servers.
+**Current build: Dodge and Defend.** New characters begin at level 1 with class starter gear. Complete training and the village quests, inspect the ancient grove, and challenge Briarwarden for your first Aether Shard. Saving uses an isolated development DataStore when Studio API access is available; otherwise the HUD clearly shows session-only mode. This development build runs in Studio, not published servers.
 
 ## Included now
 
@@ -24,6 +24,7 @@ A fantasy action RPG for Roblox, set in the world of Hearthglen and the shattere
 - Three level-5 Epic guardian rewards: Sentinel shield, Spellweaver staff and Ranger bow. First-defeat and Rowan turn-in rewards can be earned only once per character.
 - Repeatable creature XP/gold, shared defeat credit for recent nearby contributors, and a bounded generation guard against duplicate kill rewards.
 - Health/mana/stamina HUD, server-enforced costs/cooldowns/range/facing/line of sight, target selection, reduced-motion control, and original weapon motion/hit effects.
+- Directional dodge for every class, shield guarding, and stamina-based sprinting, with server-owned costs, cooldowns and incoming-hit checks.
 - Level/XP/gold and objective HUD, Warden Mira training rewards, and level-based stat growth.
 - Validated, versioned saves with session leases, autosave, bounded retries, final-save attempts and visible save status.
 
@@ -31,7 +32,7 @@ Equipped stats now affect damage, maximum health and walking speed. Equipment ch
 
 ## Open the ready-made Studio file
 
-Download [Aetherfall.rbxl](studio/Aetherfall.rbxl) using GitHub's **Download raw file** button. In Roblox Studio, choose **File → Open from File**, select it, then press **Play**. The workshop and training grounds generate at startup. No plugins are required. Saving needs the separate Studio setup below; gameplay still works without it. The [previous village build](studio/Aetherfall-Step-4.rbxl), [earlier progression build](studio/Aetherfall-Step-3.rbxl) and [original equipment sandbox](studio/Aetherfall-Step-2.rbxl) remain available separately. New saves migrate to schema version 3; older builds cannot read upgraded saves. The original sandbox contains the earlier 36-item catalogue.
+Download [Aetherfall.rbxl](studio/Aetherfall.rbxl) using GitHub's **Download raw file** button. In Roblox Studio, choose **File → Open from File**, select it, then press **Play**. The workshop and training grounds generate at startup. No plugins are required. Saving needs the separate Studio setup below; gameplay still works without it. The [previous boss build](studio/Aetherfall-Step-5.rbxl), [village build](studio/Aetherfall-Step-4.rbxl), [earlier progression build](studio/Aetherfall-Step-3.rbxl) and [original equipment sandbox](studio/Aetherfall-Step-2.rbxl) remain available separately. Saves use schema version 3, compatible with the previous boss build. Earlier pre-boss builds cannot read upgraded saves. The original sandbox contains the earlier 36-item catalogue.
 
 ## Build and open in Studio
 
@@ -48,10 +49,10 @@ The installer downloads pinned official GitHub releases into ignored `.tools/` a
 
 On Windows/macOS, install matching official releases from [Rojo](https://github.com/rojo-rbx/rojo/releases/tag/v7.7.1) and [Lune](https://github.com/lune-org/lune/releases/tag/v0.11.1) on `PATH` (or in `.tools/`), then run `python scripts/check.py` from the repository root. The setup script supports Linux x86_64.
 
-Open **`build/Aetherfall-Step-5.rbxl`** with Roblox Studio, then press **Play**. The world generates when the server starts. No Command Bar pasting, plugins, keys, or uploaded assets are required for session-only play. Build without running tests:
+Open **`build/Aetherfall-Step-6.rbxl`** with Roblox Studio, then press **Play**. The world generates when the server starts. No Command Bar pasting, plugins, keys, or uploaded assets are required for session-only play. Build without running tests:
 
 ```sh
-.tools/rojo build default.project.json --output build/Aetherfall-Step-5.rbxl
+.tools/rojo build default.project.json --output build/Aetherfall-Step-6.rbxl
 ```
 
 For live syncing, use the matching official Rojo Studio plugin and `.tools/rojo serve default.project.json`. Opening the built place directly needs no plugin. Save a copy of manual Studio edits before rebuilding/syncing; edit Luau in `src/` to retain changes.
@@ -75,6 +76,22 @@ For live syncing, use the matching official Rojo Studio plugin and `.tools/rojo 
 15. For branch sweeps, move behind the guardian or more than eleven studs away. For root bursts, leave the marked five-stud circle. After two attacks, the core opens for four seconds and loses its armor. The boss is stationary; attacks and warnings are server-timed.
 16. If everyone dies or leaves the arena for three seconds, the encounter resets. Victory grants recent nearby contributors their once-only class reward, 1300 XP and 180 gold. Return to Rowan for 400 XP, 120 gold and the completed first-shard story flag. Replays help other players but do not repeat the first-clear rewards.
 17. The current catalogue has 39 items. Advanced non-boss items remain reserved for future loot; new characters still receive only starter equipment.
+
+## Dodge, guard and sprint
+
+| Action | Keyboard/mouse | Controller | Touch |
+| --- | --- | --- | --- |
+| Dodge | Q | B | Dodge |
+| Shield guard | Hold right mouse | Hold LT | Toggle Guard |
+| Sprint | Hold Shift while moving | Toggle L3 | Toggle Sprint |
+
+Dodge follows your movement direction, or facing direction when stationary. It moves up to eight studs along a server-checked path, costs 18 stamina, has a cooldown of 1.2 seconds and gives 0.25 seconds of protection against NPC attacks. This is a quick step with feedback, not a full rolling animation. Ranger Quickstep remains a separate class ability.
+
+Guard needs an equipped shield and faces the incoming attack. It reduces valid frontal damage by 70% after defence, drains 4 stamina per second, and costs 10 per blocked hit. It slows movement to 6 studs/second; attacks require releasing guard. Rear hits and a source directly underneath the player are not blocked. Insufficient stamina breaks guard and briefly prevents raising it again.
+
+Sprint multiplies equipment/level-based speed by 1.35, capped at 32 studs/second, and drains 22 stamina per second. Stamina does not regenerate during sprint or guard; mana regeneration is unchanged. Attacks cancel sprint. Keyboard Shift can resume after a natural movement stop, but combat actions require a fresh sprint input. On touch/controller, toggle off when done.
+
+Opening the equipment/dialogue UI, typing, losing focus or respawning releases held controls. Dodge deadlines and resources cannot be reset by swapping class or equipment. The defence HUD shows cooldown/stance state; on very short boss layouts its extra strip hides while controls remain available.
 
 ## Test saving in Studio
 
@@ -132,6 +149,9 @@ Volumes are controlled through the local player attributes `AetherfallMusicVolum
 | `src/server/GroveService.luau` | ServerScriptService.Workshop | Validated rune inspection and boss reward delivery |
 | `src/server/BossService.luau` | ServerScriptService.Workshop | Enrollment, telegraphs, phases, scaling and recovery |
 | `src/client/Boss.client.luau` | StarterPlayer.StarterPlayerScripts.EquipmentWorkshop | Boss HP, warning text and encounter messages |
+| `src/shared/DefenceRules.luau` | ReplicatedStorage.Shared | Dodge, guard, sprint and stamina transactions |
+| `src/server/DefenceService.luau` | ServerScriptService.Workshop | Movement validation, shared resources and incoming NPC hits |
+| `src/client/Defence.client.luau` | StarterPlayer.StarterPlayerScripts.EquipmentWorkshop | Defence input, cooldown HUD and release cleanup |
 
 Clients submit action names, owned instance IDs and slot/class choices. The server calculates changes and statistics; shared rules do not grant client authority. Catalog IDs are stable; item instance IDs such as `gear_000001` are unique within a player profile and retain their identity across saves.
 
@@ -139,6 +159,6 @@ Combat requests send only an action and registered target ID; the server derives
 
 ## Validation and limits
 
-`python3 scripts/check.py` checks all 33 runtime sources, 319 rule/service cases, all 39 procedural equipment models, R6/R15 attachments, grove/arena construction and the generated place. It also refreshes the downloadable `studio/Aetherfall.rbxl`. Persistence and service tests use mocked DataStore, clocks, network and physics queries. They do not run the Roblox engine or prove live save reliability. See [test coverage and pending Studio checks](docs/TESTING.md).
+`python3 scripts/check.py` checks all 36 runtime sources, 385 rule/service cases, all 39 procedural equipment models, R6/R15 attachments, grove/arena construction and the generated place. It also refreshes the downloadable `studio/Aetherfall.rbxl`. Persistence and service tests use mocked DataStore, clocks, network and physics queries. They do not run the Roblox engine or prove live save reliability. See [test coverage and pending Studio checks](docs/TESTING.md).
 
-Automated checks pass. **Detailed grove Studio playtests are still pending**, including boss combat, party scaling, quest migration, UI rendering, touch/controller navigation, streaming and collisions. The encounter uses a procedural model and server-timed area attacks; a full boss animation set, minion phase and final balance pass are future work. See the [manual checklist](docs/TESTING.md).
+Automated checks pass. **Detailed Studio playtests for the new defence controls are still pending**, including real movement replication, dodge collisions, shield facing, controller/touch input and boss HUD layout. Earlier grove tests also remain listed for acceptance. The encounter uses a procedural model and server-timed area attacks; a full boss animation set, minion phase and final balance pass are future work. See the [manual checklist](docs/TESTING.md).

@@ -22,7 +22,7 @@ end
 
 local connections = {}
 local running = true
-local reducedMotion = false
+local reducedMotion = player:GetAttribute("AetherfallReducedMotion") == true
 local selectedTarget = nil
 local manualTargetUntil = 0
 local lastRequest = 0
@@ -98,6 +98,7 @@ local motion = create("TextButton", help, {
 	BackgroundColor3 = Color3.fromRGB(40, 54, 63), BorderSizePixel = 0,
 	Font = Enum.Font.GothamMedium, TextSize = 11, TextColor3 = Color3.fromRGB(225, 231, 226),
 })
+motion.Text = "Reduced motion: " .. (if reducedMotion then "ON" else "OFF")
 create("UICorner", motion, { CornerRadius = UDim.new(0, 4) })
 local highlight = create("Highlight", workspace, {
 	Name = "SelectedTrainingTarget", FillTransparency = 1, OutlineTransparency = 0.15,
@@ -327,6 +328,7 @@ local function feedback(data)
 end
 connect(motion.Activated, function()
 	reducedMotion = not reducedMotion
+	player:SetAttribute("AetherfallReducedMotion", reducedMotion)
 	motion.Text = "Reduced motion: " .. (if reducedMotion then "ON" else "OFF")
 	if reducedMotion then
 		effects:ClearAllChildren()

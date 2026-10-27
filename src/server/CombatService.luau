@@ -135,6 +135,19 @@ function CombatService:_sendState(player)
 	})
 end
 
+function CombatService:_refreshResources(player, now)
+	local entry = self.states[player]
+	if not entry then return nil end
+	local scale = if self.options.staminaRegenScale then self.options.staminaRegenScale(player) else 1
+	Rules.refresh(entry.combat, now, scale)
+	return entry.combat
+end
+
+-- This mutable reference is restricted to trusted server services, never returned by a remote.
+function CombatService:getResources(player)
+	return self:_refreshResources(player, os.clock())
+end
+
 function CombatService:_applyStats(player, fullHealth)
 	local profile = self.profiles[player]
 	local _, humanoid = characterParts(player)
@@ -285,7 +298,13 @@ function CombatService:_request(player, action, targetId)
 		self:_reject(player, "Your character is loading or save ownership was lost. Actions are paused.")
 		return
 	end
-	Rules.refresh(entry.combat, now)
+	if action ~= "Sync" and self.options.actionAllowed then
+		local allowed, message = self.options.actionAllowed(player)
+		if not allowed then self:_reject(player, message or "Finish defending before attacking."); return end
+	end
+	-- A defence callback can advance the shared clock while paying elapsed stance costs.
+	now = os.clock()
+	self:_refreshResources(player, now)
 	if action == "Sync" then self:_sendState(player); return end
 	local character, humanoid, root = characterParts(player)
 	local mainHand, offHand = equippedItem(profile, "MainHand"), equippedItem(profile, "OffHand")
@@ -352,7 +371,7 @@ end
 
 function CombatService:_tick(now)
 	for player, entry in self.states do
-		Rules.refresh(entry.combat, now)
+		self:_refreshResources(player, now)
 		self:_sendState(player)
 	end
 	for _, target in self.targets do

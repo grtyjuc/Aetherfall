@@ -48,11 +48,13 @@ def main():
     run(lune, "run", "tests/grove-world.spec.luau")
     run(lune, "run", "tests/boss.spec.luau")
     run(lune, "run", "tests/boss-gear.spec.luau")
+    run(lune, "run", "tests/defence.spec.luau")
+    run(lune, "run", "tests/defence-service.spec.luau")
     (ROOT / "build").mkdir(exist_ok=True)
-    run(rojo, "build", "default.project.json", "--output", "build/Aetherfall-Step-5.rbxl")
+    run(rojo, "build", "default.project.json", "--output", "build/Aetherfall-Step-6.rbxl")
     run(lune, "run", "tests/place.spec.luau")
     (ROOT / "studio").mkdir(exist_ok=True)
-    shutil.copyfile(ROOT / "build/Aetherfall-Step-5.rbxl", ROOT / "studio/Aetherfall.rbxl")
+    shutil.copyfile(ROOT / "build/Aetherfall-Step-6.rbxl", ROOT / "studio/Aetherfall.rbxl")
     print("Packaged studio/Aetherfall.rbxl", flush=True)
 
 

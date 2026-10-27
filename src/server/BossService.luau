@@ -296,7 +296,10 @@ function BossService:_impact(now)
 		if inside and (participant.character:GetAttribute("AetherfallSpawnProtectedUntil") or 0) <= now
 			and self:_lineOfSight(participant.character, self.home, position(participant.root)) then
 			local defence = math.max(0, Progression.stats(self.profiles[participant.player]).Defence)
-			participant.humanoid:TakeDamage(math.max(1, 16 * 100 / (100 + defence)))
+			local damage = math.max(1, 16 * 100 / (100 + defence))
+			local source = if self.phase == "SweepWindup" then self.home else self.rootPosition
+			if self.options.applyDamage then self.options.applyDamage(participant.player, damage, source)
+			else participant.humanoid:TakeDamage(damage) end
 		end
 	end
 	self.marker.Transparency = 1

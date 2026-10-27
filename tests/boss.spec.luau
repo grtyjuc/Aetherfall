@@ -340,4 +340,52 @@ test("late entry onto a nearly resolved root warning is protected only for its g
 	f.service:destroy()
 end)
 
+test("sweep routes one mitigated hit through the defence hook without applying damage twice", function()
+	local f = fixture(); local player = f:addPlayer()
+	local calls = {}
+	f.service.options.applyDamage = function(actor, damage, source)
+		table.insert(calls, { player = actor, damage = damage, source = source })
+	end
+	assert(f.service:challenge(player)); f:move(player, Vector3.new(0, 0, 7))
+	f:step(1.5); f:step(1.21)
+	local expected = math.max(1, 16 * 100 / (100 + Progression.stats(f.profiles[player]).Defence))
+	assert(#calls == 1 and calls[1].player == player)
+	assert(math.abs(calls[1].damage - expected) < 0.0001 and calls[1].source == f.service.home)
+	assert(player.humanoid.damage == 0, "Configured defence hook owns damage application")
+	f.service:destroy()
+end)
+
+test("root impact uses its fixed cast location as the defence source", function()
+	local f = fixture(); local player = f:addPlayer()
+	local calls = {}
+	f.service.options.applyDamage = function(actor, damage, source)
+		table.insert(calls, { player = actor, damage = damage, source = source })
+	end
+	assert(f.service:challenge(player)); f:move(player, Vector3.new(0, 0, 16))
+	f:step(1.5); f:step(1.21); f:step(0.81)
+	assert(f.service.phase == "RootWindup" and #calls == 0)
+	local castPosition = f.service.rootPosition
+	f:step(1.41)
+	local expected = math.max(1, 16 * 100 / (100 + Progression.stats(f.profiles[player]).Defence))
+	assert(#calls == 1 and calls[1].player == player and calls[1].source == castPosition)
+	assert(math.abs(calls[1].damage - expected) < 0.0001 and player.humanoid.damage == 0)
+	f.service:destroy()
+end)
+
+test("defence hook still cannot bypass boss impact eligibility checks", function()
+	for _, reason in { "blocked", "spawn", "paused", "outside" } do
+		local f = fixture(); local player = f:addPlayer()
+		local calls = 0
+		f.service.options.applyDamage = function() calls += 1 end
+		assert(f.service:challenge(player)); f:move(player, Vector3.new(0, 0, 7)); f:step(1.5)
+		if reason == "blocked" then f.blocked = true
+		elseif reason == "spawn" then player.Character:SetAttribute("AetherfallSpawnProtectedUntil", f.now + 3)
+		elseif reason == "paused" then player.paused = true
+		else f:move(player, Vector3.new(0, 0, 40)) end
+		f:step(1.21)
+		assert(calls == 0 and player.humanoid.damage == 0)
+		f.service:destroy()
+	end
+end)
+
 print(passed .. " Briarwarden encounter tests passed with mocked network, time and physics; Studio play remains pending.")
